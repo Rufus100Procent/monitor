@@ -11,7 +11,6 @@ import java.util.UUID;
 @Repository
 public interface ServerRegisterRepository extends ReactiveCrudRepository<ServerRegister, UUID> {
 
-    Flux<ServerRegister> findAllByActiveTrue();
 
     Mono<ServerRegister> findByBaseUrlAndActuatorPath(String baseUrl, String actuatorPath);
 

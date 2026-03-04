@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS server_register (
     secret VARCHAR(500) NOT NULL,
     poll_interval_seconds INT NOT NULL DEFAULT 15,
     status VARCHAR(50) NOT NULL DEFAULT 'UNKNOWN',
-    active BOOLEAN NOT NULL DEFAULT TRUE,
+    pause BOOLEAN NOT NULL DEFAULT FALSE,
     registered_at TIMESTAMP WITH TIME ZONE NOT NULL,
     last_polled_at TIMESTAMP WITH TIME ZONE,
     last_seen_up TIMESTAMP WITH TIME ZONE,

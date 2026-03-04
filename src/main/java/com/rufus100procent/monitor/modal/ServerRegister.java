@@ -29,7 +29,6 @@ public class ServerRegister implements Persistable<UUID> {
     private Instant lastPolledAt;
     private Instant lastSeenUp;
 
-
     @Override
     public UUID getId() {
         return id;
