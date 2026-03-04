@@ -1,6 +1,6 @@
 package com.rufus100procent.monitor.repo;
 
-import com.rufus100procent.monitor.modal.RegisteredServer;
+import com.rufus100procent.monitor.modal.ServerRegister;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
@@ -9,11 +9,11 @@ import reactor.core.publisher.Mono;
 import java.util.UUID;
 
 @Repository
-public interface RegisteredServerRepository extends ReactiveCrudRepository<RegisteredServer, UUID> {
+public interface ServerRegisterRepository extends ReactiveCrudRepository<ServerRegister, UUID> {
 
-    Flux<RegisteredServer> findAllByActiveTrue();
+    Flux<ServerRegister> findAllByActiveTrue();
 
-    Mono<RegisteredServer> findByBaseUrlAndActuatorPath(String baseUrl, String actuatorPath);
+    Mono<ServerRegister> findByBaseUrlAndActuatorPath(String baseUrl, String actuatorPath);
 
     Mono<Boolean> existsByBaseUrlAndActuatorPath(String baseUrl, String actuatorPath);
 }

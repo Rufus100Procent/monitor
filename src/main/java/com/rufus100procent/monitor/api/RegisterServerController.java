@@ -4,7 +4,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/servers")
+@RequestMapping("/api/v0/server")
 public class RegisterServerController {
 
 //    register new server

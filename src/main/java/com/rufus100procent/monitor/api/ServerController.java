@@ -4,9 +4,7 @@ import com.rufus100procent.monitor.service.ServerUrlValidationService;
 import com.rufus100procent.utils.ApiError;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 
@@ -19,7 +17,7 @@ public class ServerController {
         this.validateUrl = validateUrl;
     }
 
-    @GetMapping("/validate")
+    @PostMapping("/validate")
     public Mono<ResponseEntity<Object>> validate(@RequestParam String baseUrl) {
         return validateUrl.validateUrl(baseUrl)
                 .map(dto -> ResponseEntity.ok((Object) dto))
