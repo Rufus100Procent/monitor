@@ -1,4 +1,4 @@
-package com.rufus100procent.repo;
+package com.rufus100procent.monitor.repo;
 
 import com.rufus100procent.monitor.modal.MonitorUser;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
