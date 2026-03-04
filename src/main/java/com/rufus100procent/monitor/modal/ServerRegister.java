@@ -23,7 +23,7 @@ public class ServerRegister implements Persistable<UUID> {
     private String actuatorPath;
     private String secret;
     private int pollIntervalSeconds;
-    private boolean active;
+    private boolean pause;
     private Instant registeredAt;
     private String status;
     private Instant lastPolledAt;
@@ -92,12 +92,12 @@ public class ServerRegister implements Persistable<UUID> {
         this.status = status;
     }
 
-    public boolean isActive() {
-        return active;
+    public boolean isPause() {
+        return pause;
     }
 
-    public void setActive(boolean active) {
-        this.active = active;
+    public void setPause(boolean pause) {
+        this.pause = pause;
     }
 
     public Instant getRegisteredAt() {
