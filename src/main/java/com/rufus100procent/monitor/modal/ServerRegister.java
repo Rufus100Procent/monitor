@@ -39,6 +39,10 @@ public class ServerRegister implements Persistable<UUID> {
         return isNew;
     }
 
+    public void markAsExisting() {
+        this.isNew = false;
+    }
+
     public void setId(UUID id) {
         this.id = id;
     }

@@ -2,6 +2,7 @@ package com.rufus100procent.monitor.service;
 
 import com.rufus100procent.monitor.dto.RegisteredServerDto;
 import com.rufus100procent.monitor.dto.ServerDto;
+import com.rufus100procent.monitor.dto.UpdateRegisteredServerDto;
 import com.rufus100procent.monitor.modal.ServerRegister;
 import com.rufus100procent.monitor.repo.ServerRegisterRepository;
 import org.springframework.stereotype.Service;
@@ -56,6 +57,42 @@ public class ServerRegisterService {
 
     public Flux<RegisteredServerDto> getAllServers() {
         return serverRegisterRepository.findAll()
+                .map(this::toDto);
+    }
+
+    public Mono<RegisteredServerDto> updateServer(UpdateRegisteredServerDto data) {
+        return serverRegisterRepository.findById(data.getId())
+                .switchIfEmpty(Mono.error(new IllegalArgumentException(
+                        "Server not found with id: " + data.getId()
+                )))
+                .flatMap(register -> {
+                    register.setName(data.getAppName());
+                    register.setPollIntervalSeconds(data.getPollIntervalSeconds());
+                    register.setPause(data.isPause());
+                    register.markAsExisting();
+                    return serverRegisterRepository.save(register);
+                })
+                .map(this::toDto);
+    }
+
+    public Mono<Void> deleteServer(UUID id) {
+        return serverRegisterRepository.findById(id)
+                .switchIfEmpty(Mono.error(new IllegalArgumentException(
+                        "Server not found with id: " + id
+                )))
+                .flatMap(serverRegisterRepository::delete);
+    }
+
+    public Mono<RegisteredServerDto> togglePause(UUID id, boolean pause) {
+        return serverRegisterRepository.findById(id)
+                .switchIfEmpty(Mono.error(new IllegalArgumentException(
+                        "Server not found with id: " + id
+                )))
+                .flatMap(register -> {
+                    register.setPause(pause);
+                    register.markAsExisting();
+                    return serverRegisterRepository.save(register);
+                })
                 .map(this::toDto);
     }
 

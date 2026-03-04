@@ -2,6 +2,7 @@ package com.rufus100procent.monitor.api;
 
 import com.rufus100procent.monitor.dto.RegisteredServerDto;
 import com.rufus100procent.monitor.dto.ServerDto;
+import com.rufus100procent.monitor.dto.UpdateRegisteredServerDto;
 import com.rufus100procent.monitor.service.ServerRegisterService;
 import com.rufus100procent.utils.ApiError;
 import org.springframework.http.HttpStatus;
@@ -23,7 +24,7 @@ public class RegisterServerController {
         this.registerService = registerService;
     }
 
-    @PostMapping("/register")
+    @PostMapping
     public Mono<ResponseEntity<Object>> register(@RequestBody ServerDto data) {
         return registerService.registerServer(data)
                 .map(secret -> ResponseEntity.ok((Object) Map.of("secret", secret)))
@@ -37,16 +38,33 @@ public class RegisterServerController {
                 .onErrorResume(ex -> ApiError.error(ex, HttpStatus.NOT_FOUND));
     }
 
-    @GetMapping("/all")
+    @GetMapping
     public Flux<RegisteredServerDto> getAll() {
         return registerService.getAllServers();
     }
 
-//    update server name, url, interval
+    @PutMapping
+    public Mono<ResponseEntity<Object>> update(@RequestBody UpdateRegisteredServerDto data) {
+        return registerService.updateServer(data)
+                .map(dto -> ResponseEntity.ok((Object) dto))
+                .onErrorResume(ex -> ApiError.error(ex, HttpStatus.BAD_REQUEST));
+    }
 
-//    remove server from monitoring (delete)
+    @DeleteMapping("/{id}")
+    public Mono<ResponseEntity<Object>> delete(@PathVariable UUID id) {
+        return registerService.deleteServer(id)
+                .then(Mono.just(ResponseEntity.ok((Object) Map.of("message", "Server deleted successfully"))))
+                .onErrorResume(ex -> ApiError.error(ex, HttpStatus.NOT_FOUND));
+    }
 
-//    stop polling this server (pause or unpause, boolean pause true or false)
+    @PatchMapping("/{id}/pause")
+    public Mono<ResponseEntity<Object>> togglePause(@PathVariable UUID id,
+                                                    @RequestParam boolean pause) {
+        return registerService.togglePause(id, pause)
+                .map(dto -> ResponseEntity.ok((Object) dto))
+                .onErrorResume(ex -> ApiError.error(ex, HttpStatus.NOT_FOUND));
+    }
 
 //    test connection, check secret works
+
 }
