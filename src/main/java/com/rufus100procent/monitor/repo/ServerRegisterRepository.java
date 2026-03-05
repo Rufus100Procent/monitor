@@ -10,9 +10,8 @@ import java.util.UUID;
 
 @Repository
 public interface ServerRegisterRepository extends ReactiveCrudRepository<ServerRegister, UUID> {
-
-
-    Mono<ServerRegister> findByBaseUrlAndActuatorPath(String baseUrl, String actuatorPath);
-
     Mono<Boolean> existsByBaseUrlAndActuatorPath(String baseUrl, String actuatorPath);
+
+    Flux<ServerRegister> findAllByPauseFalse();
+
 }
