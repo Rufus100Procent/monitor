@@ -35,7 +35,7 @@ public class ServerRegisterService {
             register.setId(UUID.randomUUID());
             register.setRegisteredAt(Instant.now());
             register.setStatus("UNKNOWN");
-            register.setPause(true);
+            register.setPause(false);
             register.setSecret("monitor-v1-" + UUID.randomUUID());
             register.setName(data.getName());
             register.setBaseUrl(data.getBaseUrl());
