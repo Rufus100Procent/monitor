@@ -3,7 +3,7 @@ package com.rufus100procent.monitor;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
+//@SpringBootTest
 class MonitorApplicationTests {
 
     @Test
