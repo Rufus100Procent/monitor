@@ -1,29 +1,13 @@
-package com.rufus100procent.monitor.modal;
-
-
-import org.jspecify.annotations.Nullable;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.Transient;
-import org.springframework.data.domain.Persistable;
-import org.springframework.data.relational.core.mapping.Column;
-import org.springframework.data.relational.core.mapping.Table;
+package com.rufus100procent.monitor.dto;
 
 import java.time.Instant;
 import java.util.UUID;
 
-@Table("server_snapshots")
-public class ServerSnapshot implements Persistable<UUID>  {
+public class ServerSnapshotDto {
 
-    @Id
     private UUID id;
     private UUID serverId;
-
-    @Transient
-    private boolean isNew = true;
-
     private Instant polledAt;
-    private String serverTimezone;
-    private String serverLocalTime;
 
     private String healthStatus;
     private String appName;
@@ -36,33 +20,16 @@ public class ServerSnapshot implements Persistable<UUID>  {
 
     private Long httpRequestCount;
     private Double httpAvgMs;
-    private Double httpMaxMs;            // MAX slowest request
-
-    @Column("http_2xx_count")
+    private Double httpMaxMs;
     private Long http2xxCount;
-
-    @Column("http_4xx_count")
     private Long http4xxCount;
-
-    @Column("http_5xx_count")
     private Long http5xxCount;
-
-    private Double systemLoad;
-    private Long jvmThreadsLive;
-    private Double gcOverhead;
-    private Long diskTotalBytes;
-    private Long diskFreeBytes;
 
     private boolean pollSuccess;
     private String pollErrorMessage;
 
-    @Override
-    public boolean isNew() {
-        return isNew;
-    }
 
-    @Override
-    public @Nullable UUID getId() {
+    public UUID getId() {
         return id;
     }
 
@@ -78,72 +45,12 @@ public class ServerSnapshot implements Persistable<UUID>  {
         this.serverId = serverId;
     }
 
-    public void setNew(boolean aNew) {
-        isNew = aNew;
-    }
-
     public Instant getPolledAt() {
         return polledAt;
     }
 
-    public Double getSystemLoad() {
-        return systemLoad;
-    }
-
-    public void setSystemLoad(Double systemLoad) {
-        this.systemLoad = systemLoad;
-    }
-
-    public Long getJvmThreadsLive() {
-        return jvmThreadsLive;
-    }
-
-    public void setJvmThreadsLive(Long jvmThreadsLive) {
-        this.jvmThreadsLive = jvmThreadsLive;
-    }
-
-    public Double getGcOverhead() {
-        return gcOverhead;
-    }
-
-    public void setGcOverhead(Double gcOverhead) {
-        this.gcOverhead = gcOverhead;
-    }
-
     public void setPolledAt(Instant polledAt) {
         this.polledAt = polledAt;
-    }
-
-    public Long getDiskTotalBytes() {
-        return diskTotalBytes;
-    }
-
-    public void setDiskTotalBytes(Long diskTotalBytes) {
-        this.diskTotalBytes = diskTotalBytes;
-    }
-
-    public Long getDiskFreeBytes() {
-        return diskFreeBytes;
-    }
-
-    public void setDiskFreeBytes(Long diskFreeBytes) {
-        this.diskFreeBytes = diskFreeBytes;
-    }
-
-    public String getServerTimezone() {
-        return serverTimezone;
-    }
-
-    public void setServerTimezone(String serverTimezone) {
-        this.serverTimezone = serverTimezone;
-    }
-
-    public String getServerLocalTime() {
-        return serverLocalTime;
-    }
-
-    public void setServerLocalTime(String serverLocalTime) {
-        this.serverLocalTime = serverLocalTime;
     }
 
     public String getHealthStatus() {

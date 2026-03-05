@@ -33,6 +33,11 @@ CREATE TABLE IF NOT EXISTS server_snapshots (
     http_2xx_count BIGINT,
     http_4xx_count BIGINT,
     http_5xx_count BIGINT,
+    system_load DOUBLE PRECISION,
+    jvm_threads_live BIGINT,
+    gc_overhead DOUBLE PRECISION,
+    disk_total_bytes BIGINT,
+    disk_free_bytes BIGINT,
     poll_success BOOLEAN NOT NULL DEFAULT TRUE,
     poll_error_message TEXT,
     CONSTRAINT fk_server
