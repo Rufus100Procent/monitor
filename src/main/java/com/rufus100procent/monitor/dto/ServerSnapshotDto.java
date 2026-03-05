@@ -25,9 +25,17 @@ public class ServerSnapshotDto {
     private Long http4xxCount;
     private Long http5xxCount;
 
+    private Double systemLoad;
+    private Long jvmThreadsLive;
+    private Double gcOverhead;
+    private Long diskTotalBytes;
+    private Long diskFreeBytes;
+
     private boolean pollSuccess;
     private String pollErrorMessage;
 
+    private String monitorTimezone;
+    private String monitorLocalTime;
 
     public UUID getId() {
         return id;
@@ -83,6 +91,62 @@ public class ServerSnapshotDto {
 
     public void setMemoryUsedBytes(Long memoryUsedBytes) {
         this.memoryUsedBytes = memoryUsedBytes;
+    }
+
+    public Double getSystemLoad() {
+        return systemLoad;
+    }
+
+    public void setSystemLoad(Double systemLoad) {
+        this.systemLoad = systemLoad;
+    }
+
+    public Long getJvmThreadsLive() {
+        return jvmThreadsLive;
+    }
+
+    public String getMonitorTimezone() {
+        return monitorTimezone;
+    }
+
+    public void setMonitorTimezone(String monitorTimezone) {
+        this.monitorTimezone = monitorTimezone;
+    }
+
+    public String getMonitorLocalTime() {
+        return monitorLocalTime;
+    }
+
+    public void setMonitorLocalTime(String monitorLocalTime) {
+        this.monitorLocalTime = monitorLocalTime;
+    }
+
+    public void setJvmThreadsLive(Long jvmThreadsLive) {
+        this.jvmThreadsLive = jvmThreadsLive;
+    }
+
+    public Double getGcOverhead() {
+        return gcOverhead;
+    }
+
+    public void setGcOverhead(Double gcOverhead) {
+        this.gcOverhead = gcOverhead;
+    }
+
+    public Long getDiskTotalBytes() {
+        return diskTotalBytes;
+    }
+
+    public void setDiskTotalBytes(Long diskTotalBytes) {
+        this.diskTotalBytes = diskTotalBytes;
+    }
+
+    public Long getDiskFreeBytes() {
+        return diskFreeBytes;
+    }
+
+    public void setDiskFreeBytes(Long diskFreeBytes) {
+        this.diskFreeBytes = diskFreeBytes;
     }
 
     public Long getMemoryMaxBytes() {

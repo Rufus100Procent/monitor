@@ -1,6 +1,7 @@
 package com.rufus100procent.monitor.service;
 
 import com.rufus100procent.monitor.dto.ServerSnapshotDto;
+import com.rufus100procent.monitor.modal.ServerRegister;
 import com.rufus100procent.monitor.modal.ServerSnapshot;
 import com.rufus100procent.monitor.repo.ServerRegisterRepository;
 import com.rufus100procent.monitor.repo.ServerSnapshotRepository;
@@ -11,12 +12,15 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.UUID;
 
 @Service
 public class ServerSnapshotService {
 
     private static final Logger log = LoggerFactory.getLogger(ServerSnapshotService.class);
+    private static final ZoneId STOCKHOLM = ZoneId.of("Europe/Stockholm");
     private static final int DEFAULT_LIMIT = 50;
     private static final String DEFAULT_SORT = "DESC";
 
@@ -29,43 +33,55 @@ public class ServerSnapshotService {
         this.serverRegisterRepository = serverRegisterRepository;
     }
 
-    public Flux<ServerSnapshotDto> getSnapshots(UUID serverId,
-                                                Instant from,
-                                                Instant to,
-                                                String sort,
-                                                int limit) {
+    public Mono<ServerSnapshot> saveSnapshot(ServerSnapshot snapshot) {
+        return snapshotRepository.save(snapshot)
+                .doOnSuccess(s -> {
+                    assert s != null;
+                    log.info("Snapshot saved id={} server={} health={}",
+                            s.getId(), s.getServerId(), s.getHealthStatus());
+                })
+                .doOnError(e -> log.error("Failed to save snapshot for serverId={} reason={}",
+                        snapshot.getServerId(), e.getMessage()));
+    }
 
-        String resolvedSort = (sort != null && sort.equalsIgnoreCase("ASC")) ? "ASC" : DEFAULT_SORT;
-        int resolvedLimit = (limit > 0 && limit <= 1000) ? limit : DEFAULT_LIMIT;
+    public Mono<ServerSnapshot> saveFailedSnapshot(ServerRegister server, String errorMessage) {
+        log.warn("Saving failed snapshot for server={} reason={}", server.getName(), errorMessage);
+        ServerSnapshot snapshot = new ServerSnapshot();
+        snapshot.setId(UUID.randomUUID());
+        snapshot.setServerId(server.getId());
+        snapshot.setPolledAt(Instant.now());
+        snapshot.setMonitorTimezone(STOCKHOLM.toString());
+        snapshot.setMonitorLocalTime(LocalDateTime.now(STOCKHOLM).toString());
+        snapshot.setHealthStatus("DOWN");
+        snapshot.setPollSuccess(false);
+        snapshot.setPollErrorMessage(errorMessage);
+        return snapshotRepository.save(snapshot)
+                .doOnError(e -> log.error("Failed to save failed-snapshot for server={} reason={}",
+                        server.getName(), e.getMessage()));
+    }
+
+    public Flux<ServerSnapshotDto> getSnapshots(UUID serverId, Instant from, Instant to,
+                                                String sort, int limit) {
+        String resolvedSort  = (sort != null && sort.equalsIgnoreCase("ASC")) ? "ASC" : DEFAULT_SORT;
+        int resolvedLimit    = (limit > 0 && limit <= 1000) ? limit : DEFAULT_LIMIT;
         Instant resolvedFrom = from != null ? from : Instant.EPOCH;
-        Instant resolvedTo = to != null ? to : Instant.now();
-
-        log.debug("Fetching snapshots serverId={} from={} to={} sort={} limit={}",
-                serverId, resolvedFrom, resolvedTo, resolvedSort, resolvedLimit);
+        Instant resolvedTo   = to != null ? to : Instant.now();
 
         return serverRegisterRepository.findById(serverId)
                 .switchIfEmpty(Mono.error(new IllegalArgumentException(
-                        "Server not found with id: " + serverId
-                )))
+                        "Server not found with id: " + serverId)))
                 .flatMapMany(_ -> snapshotRepository.findSnapshots(
-                        serverId,
-                        resolvedFrom,
-                        resolvedTo,
-                        resolvedSort,
-                        resolvedLimit
-                ))
+                        serverId, resolvedFrom, resolvedTo, resolvedSort, resolvedLimit))
                 .map(this::toDto);
     }
 
     public Mono<ServerSnapshotDto> getLatest(UUID serverId) {
         return serverRegisterRepository.findById(serverId)
                 .switchIfEmpty(Mono.error(new IllegalArgumentException(
-                        "Server not found with id: " + serverId
-                )))
+                        "Server not found with id: " + serverId)))
                 .flatMap(_ -> snapshotRepository.findTopByServerIdOrderByPolledAtDesc(serverId))
                 .switchIfEmpty(Mono.error(new IllegalArgumentException(
-                        "No snapshots found for server: " + serverId
-                )))
+                        "No snapshots found for server: " + serverId)))
                 .map(this::toDto);
     }
 
@@ -74,6 +90,8 @@ public class ServerSnapshotService {
         dto.setId(snapshot.getId());
         dto.setServerId(snapshot.getServerId());
         dto.setPolledAt(snapshot.getPolledAt());
+        dto.setMonitorTimezone(snapshot.getMonitorTimezone());
+        dto.setMonitorLocalTime(snapshot.getMonitorLocalTime());
         dto.setHealthStatus(snapshot.getHealthStatus());
         dto.setAppName(snapshot.getAppName());
         dto.setAppVersion(snapshot.getAppVersion());
@@ -81,6 +99,11 @@ public class ServerSnapshotService {
         dto.setMemoryMaxBytes(snapshot.getMemoryMaxBytes());
         dto.setCpuUsage(snapshot.getCpuUsage());
         dto.setUptimeSeconds(snapshot.getUptimeSeconds());
+        dto.setSystemLoad(snapshot.getSystemLoad());
+        dto.setJvmThreadsLive(snapshot.getJvmThreadsLive());
+        dto.setGcOverhead(snapshot.getGcOverhead());
+        dto.setDiskTotalBytes(snapshot.getDiskTotalBytes());
+        dto.setDiskFreeBytes(snapshot.getDiskFreeBytes());
         dto.setHttpRequestCount(snapshot.getHttpRequestCount());
         dto.setHttpAvgMs(snapshot.getHttpAvgMs());
         dto.setHttpMaxMs(snapshot.getHttpMaxMs());

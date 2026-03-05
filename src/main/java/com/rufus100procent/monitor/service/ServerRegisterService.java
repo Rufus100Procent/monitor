@@ -5,6 +5,8 @@ import com.rufus100procent.monitor.dto.ServerDto;
 import com.rufus100procent.monitor.dto.UpdateRegisteredServerDto;
 import com.rufus100procent.monitor.modal.ServerRegister;
 import com.rufus100procent.monitor.repo.ServerRegisterRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -15,6 +17,8 @@ import java.util.UUID;
 @Service
 public class ServerRegisterService {
 
+    private static final Logger log = LoggerFactory.getLogger(ServerRegisterService.class);
+
     private final ServerRegisterRepository serverRegisterRepository;
 
     public ServerRegisterService(ServerRegisterRepository serverRegisterRepository) {
@@ -22,36 +26,56 @@ public class ServerRegisterService {
     }
 
     public Mono<String> registerServer(ServerDto data) {
-
         return serverRegisterRepository.existsByBaseUrlAndActuatorPath(
                         data.getBaseUrl(), data.getActuatorPath())
                 .filter(exists -> !exists)
                 .switchIfEmpty(Mono.error(new IllegalStateException(
-                        "Server already registered with url: " + data.getBaseUrl() + data.getActuatorPath()
-                )))
+                        "Server already registered with url: " + data.getBaseUrl() + data.getActuatorPath())))
                 .flatMap(_ -> {
+                    ServerRegister register = new ServerRegister();
+                    register.setId(UUID.randomUUID());
+                    register.setRegisteredAt(Instant.now());
+                    register.setStatus("UNKNOWN");
+                    register.setPause(false);
+                    register.setSecret("monitor-v1-" + UUID.randomUUID());
+                    register.setName(data.getName());
+                    register.setBaseUrl(data.getBaseUrl());
+                    register.setActuatorPath(data.getActuatorPath());
+                    register.setPollIntervalSeconds(data.getPollIntervalSeconds());
 
-            ServerRegister register = new ServerRegister();
-            register.setId(UUID.randomUUID());
-            register.setRegisteredAt(Instant.now());
-            register.setStatus("UNKNOWN");
-            register.setPause(false);
-            register.setSecret("monitor-v1-" + UUID.randomUUID());
-            register.setName(data.getName());
-            register.setBaseUrl(data.getBaseUrl());
-            register.setActuatorPath(data.getActuatorPath());
-            register.setPollIntervalSeconds(data.getPollIntervalSeconds());
+                    return serverRegisterRepository.save(register)
+                            .doOnSuccess(s -> {
+                                assert s != null;
+                                log.info("Server registered id={} name={} url={}{}",
+                                        s.getId(), s.getName(), s.getBaseUrl(), s.getActuatorPath());
+                            })
+                            .map(ServerRegister::getSecret);
+                });
+    }
 
-            return serverRegisterRepository.save(register)
-                    .map(ServerRegister::getSecret);
-        });
+    public Mono<Void> updateAfterPoll(ServerRegister server, String health) {
+        server.setStatus(health);
+        server.setLastPolledAt(Instant.now());
+        if ("UP".equals(health)) {
+            server.setLastSeenUp(Instant.now());
+        }
+        server.markAsExisting();
+        return serverRegisterRepository.save(server)
+                .doOnSuccess(_ -> {
+                    if ("DOWN".equals(health)) {
+                        log.warn("Server is DOWN name={} url={}{}",
+                                server.getName(), server.getBaseUrl(), server.getActuatorPath());
+                    }
+                })
+                .doOnError(e -> log.error("Failed to update server register after poll name={} reason={}",
+                        server.getName(), e.getMessage()))
+                .then();
     }
 
     public Mono<RegisteredServerDto> getServerById(UUID id) {
         return serverRegisterRepository.findById(id)
                 .switchIfEmpty(Mono.error(new IllegalArgumentException(
-                        "Server not found with id: " + id
-                )))
+                        "Server not found with id: " + id)))
                 .map(this::toDto);
     }
 
@@ -63,8 +87,7 @@ public class ServerRegisterService {
     public Mono<RegisteredServerDto> updateServer(UpdateRegisteredServerDto data) {
         return serverRegisterRepository.findById(data.getId())
                 .switchIfEmpty(Mono.error(new IllegalArgumentException(
-                        "Server not found with id: " + data.getId()
-                )))
+                        "Server not found with id: " + data.getId())))
                 .flatMap(register -> {
                     register.setName(data.getAppName());
                     register.setPollIntervalSeconds(data.getPollIntervalSeconds());
@@ -72,27 +95,31 @@ public class ServerRegisterService {
                     register.markAsExisting();
                     return serverRegisterRepository.save(register);
                 })
+                .doOnSuccess(s -> log.info("Server updated id={} name={}", s.getId(), s.getName()))
                 .map(this::toDto);
     }
 
     public Mono<Void> deleteServer(UUID id) {
         return serverRegisterRepository.findById(id)
                 .switchIfEmpty(Mono.error(new IllegalArgumentException(
-                        "Server not found with id: " + id
-                )))
-                .flatMap(serverRegisterRepository::delete);
+                        "Server not found with id: " + id)))
+                .flatMap(server -> {
+                    log.info("Deleting server id={} name={}", server.getId(), server.getName());
+                    return serverRegisterRepository.delete(server);
+                });
     }
 
     public Mono<RegisteredServerDto> togglePause(UUID id, boolean pause) {
         return serverRegisterRepository.findById(id)
                 .switchIfEmpty(Mono.error(new IllegalArgumentException(
-                        "Server not found with id: " + id
-                )))
+                        "Server not found with id: " + id)))
                 .flatMap(register -> {
                     register.setPause(pause);
                     register.markAsExisting();
                     return serverRegisterRepository.save(register);
                 })
+                .doOnSuccess(s -> log.info("Server {} id={} name={}",
+                        pause ? "paused" : "resumed", s.getId(), s.getName()))
                 .map(this::toDto);
     }
 
