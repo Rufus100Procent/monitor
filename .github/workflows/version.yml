@@ -20,12 +20,13 @@ jobs:
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
+
       - name: Create and push git tag
         shell: bash
         run: |
           set -e
           VERSION="v${{ inputs.version }}"
-          if git tag | grep -q "^$VERSION$"; then
+          if git tag | grep -qF "$VERSION"; then
             echo "Tag $VERSION already exists, skipping"
             exit 0
           fi
