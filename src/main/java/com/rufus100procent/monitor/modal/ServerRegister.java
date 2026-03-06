@@ -18,7 +18,7 @@ public class ServerRegister implements Persistable<UUID> {
     @Transient
     private boolean isNew = true;
 
-    private String name;
+    private String appName;
     private String baseUrl;
     private String actuatorPath;
     private String secret;
@@ -28,6 +28,9 @@ public class ServerRegister implements Persistable<UUID> {
     private String status;
     private Instant lastPolledAt;
     private Instant lastSeenUp;
+
+    private Long memoryMaxBytes;
+    private Integer cpuCoreCount;
 
     @Override
     public UUID getId() {
@@ -47,12 +50,12 @@ public class ServerRegister implements Persistable<UUID> {
         this.id = id;
     }
 
-    public String getName() {
-        return name;
+    public String getAppName() {
+        return appName;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setAppName(String appName) {
+        this.appName = appName;
     }
 
     public String getBaseUrl() {
@@ -121,6 +124,22 @@ public class ServerRegister implements Persistable<UUID> {
 
     public Instant getLastSeenUp() {
         return lastSeenUp;
+    }
+
+    public Long getMemoryMaxBytes() {
+        return memoryMaxBytes;
+    }
+
+    public void setMemoryMaxBytes(Long memoryMaxBytes) {
+        this.memoryMaxBytes = memoryMaxBytes;
+    }
+
+    public Integer getCpuCoreCount() {
+        return cpuCoreCount;
+    }
+
+    public void setCpuCoreCount(Integer cpuCoreCount) {
+        this.cpuCoreCount = cpuCoreCount;
     }
 
     public void setLastSeenUp(Instant lastSeenUp) {

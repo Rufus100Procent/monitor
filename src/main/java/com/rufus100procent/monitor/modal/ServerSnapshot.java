@@ -26,17 +26,16 @@ public class ServerSnapshot implements Persistable<UUID>  {
     private String monitorLocalTime;
 
     private String healthStatus;
-    private String appName;
     private String appVersion;
 
     private Long memoryUsedBytes;
-    private Long memoryMaxBytes;
+    private Double systemLoad;
     private Double cpuUsage;
+
     private Double uptimeSeconds;
 
     private Long httpRequestCount;
     private Double httpAvgMs;
-    private Double httpMaxMs;            // MAX slowest request
 
     @Column("http_2xx_count")
     private Long http2xxCount;
@@ -47,14 +46,13 @@ public class ServerSnapshot implements Persistable<UUID>  {
     @Column("http_5xx_count")
     private Long http5xxCount;
 
-    private Double systemLoad;
     private Long jvmThreadsLive;
     private Double gcOverhead;
+
     private Long diskTotalBytes;
     private Long diskFreeBytes;
 
     private boolean pollSuccess;
-    private String pollErrorMessage;
 
     @Override
     public boolean isNew() {
@@ -154,14 +152,6 @@ public class ServerSnapshot implements Persistable<UUID>  {
         this.healthStatus = healthStatus;
     }
 
-    public String getAppName() {
-        return appName;
-    }
-
-    public void setAppName(String appName) {
-        this.appName = appName;
-    }
-
     public String getAppVersion() {
         return appVersion;
     }
@@ -176,14 +166,6 @@ public class ServerSnapshot implements Persistable<UUID>  {
 
     public void setMemoryUsedBytes(Long memoryUsedBytes) {
         this.memoryUsedBytes = memoryUsedBytes;
-    }
-
-    public Long getMemoryMaxBytes() {
-        return memoryMaxBytes;
-    }
-
-    public void setMemoryMaxBytes(Long memoryMaxBytes) {
-        this.memoryMaxBytes = memoryMaxBytes;
     }
 
     public Double getCpuUsage() {
@@ -218,14 +200,6 @@ public class ServerSnapshot implements Persistable<UUID>  {
         this.httpAvgMs = httpAvgMs;
     }
 
-    public Double getHttpMaxMs() {
-        return httpMaxMs;
-    }
-
-    public void setHttpMaxMs(Double httpMaxMs) {
-        this.httpMaxMs = httpMaxMs;
-    }
-
     public Long getHttp2xxCount() {
         return http2xxCount;
     }
@@ -258,11 +232,4 @@ public class ServerSnapshot implements Persistable<UUID>  {
         this.pollSuccess = pollSuccess;
     }
 
-    public String getPollErrorMessage() {
-        return pollErrorMessage;
-    }
-
-    public void setPollErrorMessage(String pollErrorMessage) {
-        this.pollErrorMessage = pollErrorMessage;
-    }
 }

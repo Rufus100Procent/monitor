@@ -16,6 +16,8 @@ public class RegisteredServerDto {
     private String status;
     private Instant lastPolledAt;
     private Instant lastSeenUp;
+    private Long memoryMaxBytes;
+    private Integer cpuCoreCount;
 
     public UUID getId() {
         return id;
@@ -51,6 +53,22 @@ public class RegisteredServerDto {
 
     public boolean isPause() {
         return pause;
+    }
+
+    public Long getMemoryMaxBytes() {
+        return memoryMaxBytes;
+    }
+
+    public void setMemoryMaxBytes(Long memoryMaxBytes) {
+        this.memoryMaxBytes = memoryMaxBytes;
+    }
+
+    public Integer getCpuCoreCount() {
+        return cpuCoreCount;
+    }
+
+    public void setCpuCoreCount(Integer cpuCoreCount) {
+        this.cpuCoreCount = cpuCoreCount;
     }
 
     public void setPause(boolean pause) {
