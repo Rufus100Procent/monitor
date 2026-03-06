@@ -20,34 +20,55 @@ public class ServerRegisterService {
     private static final Logger log = LoggerFactory.getLogger(ServerRegisterService.class);
 
     private final ServerRegisterRepository serverRegisterRepository;
+    private final ActuatorClient actuatorClient;
 
-    public ServerRegisterService(ServerRegisterRepository serverRegisterRepository) {
+    public ServerRegisterService(ServerRegisterRepository serverRegisterRepository, ActuatorClient actuatorClient) {
         this.serverRegisterRepository = serverRegisterRepository;
+        this.actuatorClient = actuatorClient;
     }
 
+//    /actuator/metrics/jvm.memory.max
+//    /actuator/metrics/system.cpu.count
     public Mono<String> registerServer(ServerDto data) {
         return serverRegisterRepository.existsByBaseUrlAndActuatorPath(
                         data.getBaseUrl(), data.getActuatorPath())
                 .filter(exists -> !exists)
                 .switchIfEmpty(Mono.error(new IllegalStateException(
                         "Server already registered with url: " + data.getBaseUrl() + data.getActuatorPath())))
-                .flatMap(_ -> {
+                .flatMap(_ -> Mono.zip(
+                        actuatorClient.fetchMemoryMax(data.getBaseUrl(), data.getActuatorPath()),
+                        actuatorClient.fetchCpuCoreCount(data.getBaseUrl(), data.getActuatorPath())
+                ))
+                .flatMap(tuple -> {
+                    long memoryMax   = tuple.getT1();
+                    int cpuCoreCount = tuple.getT2();
+
+                    if (memoryMax == 0L) {
+                        return Mono.error(new IllegalStateException(
+                                "Could not reach actuator at: " + data.getBaseUrl() + data.getActuatorPath()
+                                        + " — is the actuator exposed and reachable?"));
+                    }
+
                     ServerRegister register = new ServerRegister();
                     register.setId(UUID.randomUUID());
                     register.setRegisteredAt(Instant.now());
                     register.setStatus("UNKNOWN");
                     register.setPause(false);
                     register.setSecret("monitor-v1-" + UUID.randomUUID());
-                    register.setName(data.getName());
+                    register.setAppName(data.getName());
                     register.setBaseUrl(data.getBaseUrl());
                     register.setActuatorPath(data.getActuatorPath());
                     register.setPollIntervalSeconds(data.getPollIntervalSeconds());
+                    register.setMemoryMaxBytes(memoryMax);
+                    register.setCpuCoreCount(cpuCoreCount);
 
                     return serverRegisterRepository.save(register)
                             .doOnSuccess(s -> {
                                 assert s != null;
-                                log.info("Server registered id={} name={} url={}{}",
-                                        s.getId(), s.getName(), s.getBaseUrl(), s.getActuatorPath());
+                                log.info(
+                                        "Server registered id={} name={} url={}{} memoryMax={} cpuCores={}",
+                                        s.getId(), s.getAppName(), s.getBaseUrl(), s.getActuatorPath(),
+                                        s.getMemoryMaxBytes(), s.getCpuCoreCount());
                             })
                             .map(ServerRegister::getSecret);
                 });
@@ -64,18 +85,18 @@ public class ServerRegisterService {
                 .doOnSuccess(_ -> {
                     if ("DOWN".equals(health)) {
                         log.warn("Server is DOWN name={} url={}{}",
-                                server.getName(), server.getBaseUrl(), server.getActuatorPath());
+                                server.getAppName(), server.getBaseUrl(), server.getActuatorPath());
                     }
                 })
                 .doOnError(e -> log.error("Failed to update server register after poll name={} reason={}",
-                        server.getName(), e.getMessage()))
+                        server.getAppName(), e.getMessage()))
                 .then();
     }
 
     public Mono<RegisteredServerDto> getServerById(UUID id) {
         return serverRegisterRepository.findById(id)
                 .switchIfEmpty(Mono.error(new IllegalArgumentException(
-                        "Server not found with id: " + id)))
+                        " Server not found with id: " + id)))
                 .map(this::toDto);
     }
 
@@ -87,15 +108,18 @@ public class ServerRegisterService {
     public Mono<RegisteredServerDto> updateServer(UpdateRegisteredServerDto data) {
         return serverRegisterRepository.findById(data.getId())
                 .switchIfEmpty(Mono.error(new IllegalArgumentException(
-                        "Server not found with id: " + data.getId())))
+                        "Server  not found with id: " + data.getId())))
                 .flatMap(register -> {
-                    register.setName(data.getAppName());
+                    register.setAppName(data.getAppName());
                     register.setPollIntervalSeconds(data.getPollIntervalSeconds());
                     register.setPause(data.isPause());
                     register.markAsExisting();
                     return serverRegisterRepository.save(register);
                 })
-                .doOnSuccess(s -> log.info("Server updated id={} name={}", s.getId(), s.getName()))
+                .doOnSuccess(s -> {
+                    assert s != null;
+                    log.info("Server updated id={} name={}", s.getId(), s.getAppName());
+                })
                 .map(this::toDto);
     }
 
@@ -104,7 +128,7 @@ public class ServerRegisterService {
                 .switchIfEmpty(Mono.error(new IllegalArgumentException(
                         "Server not found with id: " + id)))
                 .flatMap(server -> {
-                    log.info("Deleting server id={} name={}", server.getId(), server.getName());
+                    log.info("Deleting server id={} name={}", server.getId(), server.getAppName());
                     return serverRegisterRepository.delete(server);
                 });
     }
@@ -118,20 +142,25 @@ public class ServerRegisterService {
                     register.markAsExisting();
                     return serverRegisterRepository.save(register);
                 })
-                .doOnSuccess(s -> log.info("Server {} id={} name={}",
-                        pause ? "paused" : "resumed", s.getId(), s.getName()))
+                .doOnSuccess(s -> {
+                    assert s != null;
+                    log.info("Server {} id={} name={}",
+                            pause ? "paused" : "resumed", s.getId(), s.getAppName());
+                })
                 .map(this::toDto);
     }
 
     private RegisteredServerDto toDto(ServerRegister register) {
         RegisteredServerDto dto = new RegisteredServerDto();
         dto.setId(register.getId());
-        dto.setAppName(register.getName());
+        dto.setAppName(register.getAppName());
         dto.setServerActuatorUrl(register.getBaseUrl() + register.getActuatorPath());
         dto.setPollIntervalSeconds(register.getPollIntervalSeconds());
         dto.setPause(register.isPause());
         dto.setRegisteredAt(register.getRegisteredAt());
         dto.setStatus(register.getStatus());
+        dto.setCpuCoreCount(register.getCpuCoreCount());
+        dto.setMemoryMaxBytes(register.getMemoryMaxBytes());
         dto.setLastPolledAt(register.getLastPolledAt());
         dto.setLastSeenUp(register.getLastSeenUp());
         return dto;
