@@ -12,15 +12,12 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.UUID;
 
 @Service
 public class ServerSnapshotService {
 
     private static final Logger log = LoggerFactory.getLogger(ServerSnapshotService.class);
-    private static final ZoneId STOCKHOLM = ZoneId.of("Europe/Stockholm");
     private static final int DEFAULT_LIMIT = 50;
     private static final String DEFAULT_SORT = "DESC";
 
@@ -44,20 +41,17 @@ public class ServerSnapshotService {
                         snapshot.getServerId(), e.getMessage()));
     }
 
-    public Mono<ServerSnapshot> saveFailedSnapshot(ServerRegister server, String errorMessage) {
-        log.warn("Saving failed snapshot for server={} reason={}", server.getName(), errorMessage);
+    public Mono<ServerSnapshot> saveFailedSnapshot(ServerRegister server) {
+        log.warn("Saving failed snapshot for server={}", server.getAppName());
         ServerSnapshot snapshot = new ServerSnapshot();
         snapshot.setId(UUID.randomUUID());
         snapshot.setServerId(server.getId());
         snapshot.setPolledAt(Instant.now());
-        snapshot.setMonitorTimezone(STOCKHOLM.toString());
-        snapshot.setMonitorLocalTime(LocalDateTime.now(STOCKHOLM).toString());
         snapshot.setHealthStatus("DOWN");
         snapshot.setPollSuccess(false);
-        snapshot.setPollErrorMessage(errorMessage);
         return snapshotRepository.save(snapshot)
                 .doOnError(e -> log.error("Failed to save failed-snapshot for server={} reason={}",
-                        server.getName(), e.getMessage()));
+                        server.getAppName(), e.getMessage()));
     }
 
     public Flux<ServerSnapshotDto> getSnapshots(UUID serverId, Instant from, Instant to,
@@ -90,28 +84,22 @@ public class ServerSnapshotService {
         dto.setId(snapshot.getId());
         dto.setServerId(snapshot.getServerId());
         dto.setPolledAt(snapshot.getPolledAt());
-        dto.setMonitorTimezone(snapshot.getMonitorTimezone());
-        dto.setMonitorLocalTime(snapshot.getMonitorLocalTime());
         dto.setHealthStatus(snapshot.getHealthStatus());
-        dto.setAppName(snapshot.getAppName());
         dto.setAppVersion(snapshot.getAppVersion());
         dto.setMemoryUsedBytes(snapshot.getMemoryUsedBytes());
-        dto.setMemoryMaxBytes(snapshot.getMemoryMaxBytes());
         dto.setCpuUsage(snapshot.getCpuUsage());
-        dto.setUptimeSeconds(snapshot.getUptimeSeconds());
         dto.setSystemLoad(snapshot.getSystemLoad());
+        dto.setUptimeSeconds(snapshot.getUptimeSeconds());
         dto.setJvmThreadsLive(snapshot.getJvmThreadsLive());
         dto.setGcOverhead(snapshot.getGcOverhead());
         dto.setDiskTotalBytes(snapshot.getDiskTotalBytes());
         dto.setDiskFreeBytes(snapshot.getDiskFreeBytes());
         dto.setHttpRequestCount(snapshot.getHttpRequestCount());
         dto.setHttpAvgMs(snapshot.getHttpAvgMs());
-        dto.setHttpMaxMs(snapshot.getHttpMaxMs());
         dto.setHttp2xxCount(snapshot.getHttp2xxCount());
         dto.setHttp4xxCount(snapshot.getHttp4xxCount());
         dto.setHttp5xxCount(snapshot.getHttp5xxCount());
         dto.setPollSuccess(snapshot.isPollSuccess());
-        dto.setPollErrorMessage(snapshot.getPollErrorMessage());
         return dto;
     }
 }
