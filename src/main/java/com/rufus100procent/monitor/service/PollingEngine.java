@@ -10,11 +10,11 @@ import org.springframework.stereotype.Component;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple6;
+import reactor.util.function.Tuple7;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -25,8 +25,7 @@ import java.util.stream.Collectors;
 public class PollingEngine {
 
     private static final Logger log = LoggerFactory.getLogger(PollingEngine.class);
-    private static final ZoneId STOCKHOLM = ZoneId.of("Europe/Stockholm");
-    private static final String HTTP_SERVER_REQUESTS = "http.server.requests";
+    private static final String HTTP_REQUESTS = "http.server.requests";
 
     private final ServerRegisterRepository serverRegisterRepository;
     private final ServerSnapshotService serverSnapshotService;
@@ -51,7 +50,7 @@ public class PollingEngine {
         Flux.interval(Duration.ZERO, Duration.ofSeconds(2))
                 .flatMap(_ -> syncWithDatabase()
                         .onErrorResume(error -> {
-                            log.warn("Sync failed: {}", error.getMessage());
+                            log.warn("Sync failed {}", error.getMessage());
                             return Mono.empty();
                         })
                 )
@@ -65,21 +64,21 @@ public class PollingEngine {
         return serverRegisterRepository.findAllByPauseFalse()
                 .collectList()
                 .doOnNext(activeServers -> {
+                    // start new pollers
                     activeServers.forEach(server -> {
                         if (!activePollers.containsKey(server.getId())) {
                             log.info("Starting poller for server={} interval={}s",
-                                    server.getName(), server.getPollIntervalSeconds());
+                                    server.getAppName(), server.getPollIntervalSeconds());
                             startPolling(server);
                         }
                     });
-
                     Set<UUID> activeIds = activeServers.stream()
                             .map(ServerRegister::getId)
                             .collect(Collectors.toSet());
 
                     activePollers.keySet().forEach(id -> {
                         if (!activeIds.contains(id)) {
-                            log.info("Stopping poller for serverId={} (paused or deleted)", id);
+                            log.info("Stopping poller for serverId={}", id);
                             stopPolling(id);
                         }
                     });
@@ -89,15 +88,20 @@ public class PollingEngine {
 
     private void startPolling(ServerRegister server) {
         stopPolling(server.getId());
-
         Disposable disposable = Flux.interval(Duration.ZERO, Duration.ofSeconds(server.getPollIntervalSeconds()))
-                .flatMap(_ -> poll(server))
+                .flatMap(_ -> collectMetrics(server)
+                        .flatMap(snapshot -> saveSnapshot(snapshot)
+                                .flatMap(saved -> updateRegister(server, snapshot.getHealthStatus())
+                                        .thenReturn(saved)))
+                        .onErrorResume(ex -> {
+                            log.error("Poll failed for server={} reason={}", server.getAppName(), ex.getMessage());
+                            return saveFailedSnapshot(server);
+                        })
+                )
                 .subscribe(
                         _ -> {},
-                        error -> log.error("Poller crashed for server={} reason={} — poller stopped",
-                                server.getName(), error.getMessage())
+                        error -> log.error("Poller crashed for server={} reason={}", server.getAppName(), error.getMessage())
                 );
-
         activePollers.put(server.getId(), disposable);
     }
 
@@ -108,96 +112,70 @@ public class PollingEngine {
         }
     }
 
-    private Mono<ServerSnapshot> poll(ServerRegister server) {
-        String baseUrl = server.getBaseUrl();
-        String actuatorPath = server.getActuatorPath();
+    // metrics in parallel
+    private Mono<ServerSnapshot> collectMetrics(ServerRegister server) {
+        String base = server.getBaseUrl();
+        String path = server.getActuatorPath();
 
         return Mono.zip(
-                        actuatorClient.fetchHealth(baseUrl, actuatorPath),
-                        actuatorClient.fetchHealthAndDisk(baseUrl, actuatorPath),
-                        actuatorClient.fetchAppName(baseUrl, actuatorPath)
-                                .map(name -> "unknown".equals(name) ? server.getName() : name),
-                        actuatorClient.fetchAppVersion(baseUrl, actuatorPath),
-                        actuatorClient.fetchMetricValue(baseUrl, actuatorPath, "jvm.memory.used"),
-                        actuatorClient.fetchMetricValue(baseUrl, actuatorPath, "jvm.memory.max"),
-                        actuatorClient.fetchMetricValue(baseUrl, actuatorPath, "system.cpu.usage")
-                )
-                .flatMap(tuple -> {
-                    String health     = tuple.getT1();
-                    long[] disk       = tuple.getT2();
-                    String appName    = tuple.getT3();
-                    String appVersion = tuple.getT4();
-                    Double memoryUsed = tuple.getT5();
-                    Double memoryMax  = tuple.getT6();
-                    Double cpu        = tuple.getT7();
+                actuatorClient.fetchHealth(base, path),
+                actuatorClient.fetchAppVersion(base, path),
+                actuatorClient.fetchMetric(base, path, "jvm.memory.used"),
+                actuatorClient.fetchMetric(base, path, "system.cpu.usage"),
+                actuatorClient.fetchMetric(base, path, "system.load.average.1m"),
+                actuatorClient.fetchMetric(base, path, "process.uptime"),
+                actuatorClient.fetchMetric(base, path, "jvm.threads.live")
+        ).flatMap(t -> Mono.zip(
+                actuatorClient.fetchMetric(base, path, "jvm.gc.overhead"),
+                actuatorClient.fetchMetricStatistic(base, path, HTTP_REQUESTS, "COUNT"),
+                actuatorClient.fetchMetricStatistic(base, path, HTTP_REQUESTS, "TOTAL_TIME"),
+                actuatorClient.fetchMetricByOutcome(base, path, HTTP_REQUESTS, "SUCCESS"),
+                actuatorClient.fetchMetricByOutcome(base, path, HTTP_REQUESTS, "CLIENT_ERROR"),
+                actuatorClient.fetchMetricByOutcome(base, path, HTTP_REQUESTS, "SERVER_ERROR")
+        ).map(t2 -> buildSnapshot(server, t, t2)));
+    }
 
-                    return Mono.zip(
-                                    actuatorClient.fetchMetricValue(baseUrl, actuatorPath, "process.uptime"),
-                                    actuatorClient.fetchMetricValue(baseUrl, actuatorPath, "system.load.average.1m"),
-                                    actuatorClient.fetchMetricValue(baseUrl, actuatorPath, "jvm.threads.live"),
-                                    actuatorClient.fetchMetricValue(baseUrl, actuatorPath, "jvm.gc.overhead"),
-                                    actuatorClient.fetchMetricStatistic(baseUrl, actuatorPath, HTTP_SERVER_REQUESTS, "COUNT"),
-                                    actuatorClient.fetchMetricStatistic(baseUrl, actuatorPath, HTTP_SERVER_REQUESTS, "TOTAL_TIME"),
-                                    actuatorClient.fetchMetricStatistic(baseUrl, actuatorPath, HTTP_SERVER_REQUESTS, "MAX")
-                            )
-                            .flatMap(tuple2 -> {
-                                Double uptime     = tuple2.getT1();
-                                Double systemLoad = tuple2.getT2();
-                                Double threads    = tuple2.getT3();
-                                Double gcOverhead = tuple2.getT4();
-                                Double totalCount = tuple2.getT5();
-                                Double totalTime  = tuple2.getT6();
-                                Double maxTime    = tuple2.getT7();
+    // build snapshot from collected data
+    private ServerSnapshot buildSnapshot(
+            ServerRegister server,
+            Tuple7<ActuatorClient.HealthResult, String, Double, Double, Double, Double, Double> t,
+            Tuple6<Double, Double, Double, Double, Double, Double> t2) {
 
-                                return Mono.zip(
-                                                actuatorClient.fetchMetricValueByTag(baseUrl, actuatorPath, HTTP_SERVER_REQUESTS, "SUCCESS"),
-                                                actuatorClient.fetchMetricValueByTag(baseUrl, actuatorPath, HTTP_SERVER_REQUESTS, "CLIENT_ERROR"),
-                                                actuatorClient.fetchMetricValueByTag(baseUrl, actuatorPath, HTTP_SERVER_REQUESTS, "SERVER_ERROR")
-                                        )
-                                        .flatMap(httpTuple -> {
-                                            Double successCount = httpTuple.getT1();
-                                            Double clientError  = httpTuple.getT2();
-                                            Double serverError  = httpTuple.getT3();
+        ActuatorClient.HealthResult health = t.getT1();
+        double count = t2.getT2();
 
-                                            double avgMs = totalCount > 0 ? (totalTime / totalCount) * 1000 : 0.0;
-                                            double maxMs = maxTime * 1000;
+        ServerSnapshot snapshot = new ServerSnapshot();
+        snapshot.setId(UUID.randomUUID());
+        snapshot.setServerId(server.getId());
+        snapshot.setPolledAt(Instant.now());
+        snapshot.setHealthStatus(health.status());
+        snapshot.setAppVersion(t.getT2());
+        snapshot.setMemoryUsedBytes(t.getT3().longValue());
+        snapshot.setCpuUsage(t.getT4());
+        snapshot.setSystemLoad(t.getT5());
+        snapshot.setUptimeSeconds(t.getT6());
+        snapshot.setJvmThreadsLive(t.getT7().longValue());
+        snapshot.setGcOverhead(t2.getT1());
+        snapshot.setHttpRequestCount((long) count);
+        snapshot.setHttpAvgMs(count > 0 ? (t2.getT3() / count) * 1000 : 0.0);
+        snapshot.setHttp2xxCount(t2.getT4().longValue());
+        snapshot.setHttp4xxCount(t2.getT5().longValue());
+        snapshot.setHttp5xxCount(t2.getT6().longValue());
+        snapshot.setDiskTotalBytes(health.diskTotal());
+        snapshot.setDiskFreeBytes(health.diskFree());
+        snapshot.setPollSuccess(!"DOWN".equals(health.status()));
+        return snapshot;
+    }
 
-                                            ServerSnapshot snapshot = new ServerSnapshot();
-                                            snapshot.setId(UUID.randomUUID());
-                                            snapshot.setServerId(server.getId());
-                                            snapshot.setPolledAt(Instant.now());
-                                            snapshot.setMonitorTimezone(STOCKHOLM.toString());
-                                            snapshot.setMonitorLocalTime(LocalDateTime.now(STOCKHOLM).toString());
-                                            snapshot.setHealthStatus(health);
-                                            snapshot.setAppName(appName);
-                                            snapshot.setAppVersion(appVersion);
-                                            snapshot.setMemoryUsedBytes(memoryUsed.longValue());
-                                            snapshot.setMemoryMaxBytes(memoryMax.longValue());
-                                            snapshot.setCpuUsage(cpu);
-                                            snapshot.setUptimeSeconds(uptime);
-                                            snapshot.setSystemLoad(systemLoad);
-                                            snapshot.setJvmThreadsLive(threads.longValue());
-                                            snapshot.setGcOverhead(gcOverhead);
-                                            snapshot.setDiskTotalBytes(disk[0]);
-                                            snapshot.setDiskFreeBytes(disk[1]);
-                                            snapshot.setHttpRequestCount(totalCount.longValue());
-                                            snapshot.setHttpAvgMs(avgMs);
-                                            snapshot.setHttpMaxMs(maxMs);
-                                            snapshot.setHttp2xxCount(successCount.longValue());
-                                            snapshot.setHttp4xxCount(clientError.longValue());
-                                            snapshot.setHttp5xxCount(serverError.longValue());
-                                            snapshot.setPollSuccess(!"DOWN".equals(health));
+    private Mono<ServerSnapshot> saveSnapshot(ServerSnapshot snapshot) {
+        return serverSnapshotService.saveSnapshot(snapshot);
+    }
 
-                                            return serverSnapshotService.saveSnapshot(snapshot)
-                                                    .flatMap(saved -> serverRegisterService
-                                                            .updateAfterPoll(server, health)
-                                                            .thenReturn(saved));
-                                        });
-                            });
-                })
-                .onErrorResume(ex -> {
-                    log.error("Poll failed for server={} reason={}", server.getName(), ex.getMessage());
-                    return serverSnapshotService.saveFailedSnapshot(server, ex.getMessage());
-                });
+    private Mono<Void> updateRegister(ServerRegister server, String healthStatus) {
+        return serverRegisterService.updateAfterPoll(server, healthStatus);
+    }
+
+    private Mono<ServerSnapshot> saveFailedSnapshot(ServerRegister server) {
+        return serverSnapshotService.saveFailedSnapshot(server);
     }
 }
