@@ -1,7 +1,7 @@
 package com.rufus100procent.monitor.api;
 
 import com.rufus100procent.monitor.service.ServerUrlValidationService;
-import com.rufus100procent.utils.ApiError;
+import com.rufus100procent.monitor.utils.ApiError;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

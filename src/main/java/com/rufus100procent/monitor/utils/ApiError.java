@@ -1,4 +1,4 @@
-package com.rufus100procent.utils;
+package com.rufus100procent.monitor.utils;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

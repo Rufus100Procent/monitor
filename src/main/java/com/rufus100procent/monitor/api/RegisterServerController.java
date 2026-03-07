@@ -4,7 +4,7 @@ import com.rufus100procent.monitor.dto.RegisteredServerDto;
 import com.rufus100procent.monitor.dto.ServerDto;
 import com.rufus100procent.monitor.dto.UpdateRegisteredServerDto;
 import com.rufus100procent.monitor.service.ServerRegisterService;
-import com.rufus100procent.utils.ApiError;
+import com.rufus100procent.monitor.utils.ApiError;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

@@ -44,7 +44,7 @@ public class PollingEngine {
         this.actuatorClient = actuatorClient;
     }
 
-    @PostConstruct
+//    @PostConstruct
     public void init() {
         log.info("PollingEngine starting");
         Flux.interval(Duration.ZERO, Duration.ofSeconds(2))
