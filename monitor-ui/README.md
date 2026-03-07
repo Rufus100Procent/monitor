@@ -21,3 +21,7 @@ bun run build
 ```sh
 bun lint
 ```
+
+# Page Dashboard
+
+![img.png](0.2.0-dashboard.png)
