@@ -1,0 +1,86 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  /* surfaces */
+  --bg:          hsl(220, 20%, 97%);
+  --surface:     hsl(220, 20%, 100%);
+  --sidebar-bg:  hsl(220, 25%, 95%);
+  --topbar-bg:   hsl(220, 20%, 100%);
+
+  /* borders */
+  --border:      hsl(220, 15%, 88%);
+
+  /* text */
+  --text-primary:   hsl(220, 20%, 15%);
+  --text-secondary: hsl(220, 15%, 48%);
+  --text-muted:     hsl(220, 10%, 64%);
+
+  /* accent — purple */
+  --accent:       hsl(270, 70%, 58%);
+  --accent-light: hsl(270, 80%, 97%);
+  --accent-text:  hsl(270, 65%, 46%);
+
+  /* nav states */
+  --nav-hover:       hsl(220, 20%, 91%);
+  --nav-active-text: hsl(270, 65%, 46%);
+}
+
+:root.dark {
+  --bg:          hsl(220, 15%, 10%);
+  --surface:     hsl(220, 15%, 14%);
+  --sidebar-bg:  hsl(220, 15%, 12%);
+  --topbar-bg:   hsl(220, 15%, 14%);
+
+  --border:      hsl(220, 15%, 22%);
+
+  --text-primary:   hsl(220, 20%, 90%);
+  --text-secondary: hsl(220, 15%, 58%);
+  --text-muted:     hsl(220, 10%, 44%);
+
+  --accent:       hsl(270, 70%, 68%);
+  --accent-light: hsl(270, 50%, 18%);
+  --accent-text:  hsl(270, 80%, 75%);
+
+  --nav-hover:       hsl(220, 15%, 18%);
+  --nav-active-text: hsl(270, 80%, 75%);
+}
+
+html,
+body {
+  height: 100%;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  background: var(--bg);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid var(--border);
+}
+
+#app {
+  height: 100%;
+}
