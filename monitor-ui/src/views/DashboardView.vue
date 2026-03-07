@@ -5,11 +5,13 @@ import { Plus, LoaderCircle, X } from 'lucide-vue-next'
 import { registerServer } from '../api/servers'
 import type { RegisterServerBody } from '../api/servers'
 import { useServers } from '../composables/useServers'
+import { useDisplayTimezone } from '../composables/useDisplayTimezone'
 
 const router = useRouter()
 
 // Shared server state
 const { servers, loading, error: fetchError, fetch: fetchServers, ensureLoaded } = useServers()
+const { selectedIana } = useDisplayTimezone()
 
 onMounted(ensureLoaded)
 
@@ -19,15 +21,17 @@ function formatBytes(bytes: number): string {
 }
 
 function formatDate(iso: string): string {
-  const d = new Date(iso)
-  const dd = String(d.getDate()).padStart(2, '0')
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  const yy = String(d.getFullYear()).slice(2)
-  return `${dd}/${mm}/${yy}`
+  return new Date(iso).toLocaleDateString('en-GB', {
+    timeZone: selectedIana.value,
+    day: '2-digit',
+    month: '2-digit',
+    year: '2-digit',
+  })
 }
 
 function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString('en-GB', {
+    timeZone: selectedIana.value,
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',

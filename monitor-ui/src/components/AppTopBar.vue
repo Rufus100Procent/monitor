@@ -2,10 +2,12 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useTheme } from '../composables/useTheme'
 import { useSidebar } from '../composables/useSidebar'
+import { useDisplayTimezone } from '../composables/useDisplayTimezone'
 import { Sun, Moon, Menu } from 'lucide-vue-next'
 
 const { dark, toggle } = useTheme()
 const { toggle: toggleSidebar } = useSidebar()
+const { setDisplayTimezone } = useDisplayTimezone()
 
 const ZONES = [
   { city: 'Stockholm', flag: '🇸🇪', iana: 'Europe/Stockholm' },
@@ -59,6 +61,7 @@ const formattedDateTime = computed(() => {
 
 function selectZone(zone: typeof ZONES[number]) {
   selectedZone.value = zone
+  setDisplayTimezone(zone.iana)
   showDropdown.value = false
 }
 </script>
