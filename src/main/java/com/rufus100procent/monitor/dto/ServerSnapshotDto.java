@@ -10,8 +10,6 @@ public class ServerSnapshotDto {
     private Instant polledAt;
 
     private String healthStatus;
-    private String appName;
-    private String appVersion;
 
     private Long memoryUsedBytes;
     private Long memoryMaxBytes;
@@ -67,22 +65,6 @@ public class ServerSnapshotDto {
 
     public void setHealthStatus(String healthStatus) {
         this.healthStatus = healthStatus;
-    }
-
-    public String getAppName() {
-        return appName;
-    }
-
-    public void setAppName(String appName) {
-        this.appName = appName;
-    }
-
-    public String getAppVersion() {
-        return appVersion;
-    }
-
-    public void setAppVersion(String appVersion) {
-        this.appVersion = appVersion;
     }
 
     public Long getMemoryUsedBytes() {

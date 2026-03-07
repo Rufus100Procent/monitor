@@ -85,7 +85,6 @@ public class ServerSnapshotService {
         dto.setServerId(snapshot.getServerId());
         dto.setPolledAt(snapshot.getPolledAt());
         dto.setHealthStatus(snapshot.getHealthStatus());
-        dto.setAppVersion(snapshot.getAppVersion());
         dto.setMemoryUsedBytes(snapshot.getMemoryUsedBytes());
         dto.setCpuUsage(snapshot.getCpuUsage());
         dto.setSystemLoad(snapshot.getSystemLoad());

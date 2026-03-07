@@ -149,7 +149,6 @@ public class PollingEngine {
         snapshot.setServerId(server.getId());
         snapshot.setPolledAt(Instant.now());
         snapshot.setHealthStatus(health.status());
-        snapshot.setAppVersion(t.getT2());
         snapshot.setMemoryUsedBytes(t.getT3().longValue());
         snapshot.setCpuUsage(t.getT4());
         snapshot.setSystemLoad(t.getT5());

@@ -21,7 +21,6 @@ CREATE TABLE IF NOT EXISTS server_snapshots (
     server_id UUID NOT NULL,
     polled_at TIMESTAMP WITH TIME ZONE NOT NULL,
     health_status VARCHAR(50),
-    app_version VARCHAR(100),
     memory_used_bytes BIGINT,
     cpu_usage DOUBLE PRECISION,
     system_load DOUBLE PRECISION,

@@ -24,7 +24,6 @@ public class ServerSnapshot implements Persistable<UUID>  {
     private Instant polledAt;
 
     private String healthStatus;
-    private String appVersion;
 
     private Long memoryUsedBytes;
     private Double systemLoad;
@@ -132,14 +131,6 @@ public class ServerSnapshot implements Persistable<UUID>  {
 
     public void setHealthStatus(String healthStatus) {
         this.healthStatus = healthStatus;
-    }
-
-    public String getAppVersion() {
-        return appVersion;
-    }
-
-    public void setAppVersion(String appVersion) {
-        this.appVersion = appVersion;
     }
 
     public Long getMemoryUsedBytes() {
