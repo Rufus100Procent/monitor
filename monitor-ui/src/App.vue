@@ -1,13 +1,10 @@
 <script setup lang="ts">
-import { ref } from 'vue'
 import { useRoute, RouterView } from 'vue-router'
 import AppSidebar from './components/AppSidebar.vue'
 import AppTopBar from './components/AppTopBar.vue'
-import { LoaderCircle } from 'lucide-vue-next'
 import { useSidebar } from './composables/useSidebar'
 
 const route = useRoute()
-const loading = ref(false)
 const { open: sidebarOpen, close: closeSidebar } = useSidebar()
 </script>
 
@@ -21,21 +18,11 @@ const { open: sidebarOpen, close: closeSidebar } = useSidebar()
 
       <div class="content-area">
         <div class="content-topbar">
-          <span class="page-title">{{ route.name }}</span>
+          <span class="page-title">{{ (route.meta.title as string) || route.name }}</span>
         </div>
 
         <main class="content-body">
-          <RouterView v-slot="{ Component }">
-            <Suspense @pending="loading = true" @resolve="loading = false" @fallback="loading = true">
-              <component :is="Component" />
-              <template #fallback>
-                <div class="loader">
-                  <LoaderCircle :size="26" class="spin" />
-                  <span>Loading…</span>
-                </div>
-              </template>
-            </Suspense>
-          </RouterView>
+          <RouterView />
         </main>
       </div>
     </div>
