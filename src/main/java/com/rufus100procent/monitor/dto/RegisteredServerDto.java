@@ -8,6 +8,7 @@ public class RegisteredServerDto {
     private UUID id;
 
     private String appName;
+    private String appVersion;
     private String ServerActuatorUrl; // base + actuator path
     private int pollIntervalSeconds;
 
@@ -53,6 +54,14 @@ public class RegisteredServerDto {
 
     public boolean isPause() {
         return pause;
+    }
+
+    public String getAppVersion() {
+        return appVersion;
+    }
+
+    public void setAppVersion(String appVersion) {
+        this.appVersion = appVersion;
     }
 
     public Long getMemoryMaxBytes() {

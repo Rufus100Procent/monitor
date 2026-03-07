@@ -52,7 +52,7 @@ public class ServerRegisterService {
                     ServerRegister register = new ServerRegister();
                     register.setId(UUID.randomUUID());
                     register.setRegisteredAt(Instant.now());
-                    register.setStatus("UNKNOWN");
+                    register.setStatus("UP");
                     register.setPause(false);
                     register.setSecret("monitor-v1-" + UUID.randomUUID());
                     register.setAppName(data.getAppName());
@@ -62,6 +62,8 @@ public class ServerRegisterService {
                     register.setPollIntervalSeconds(data.getPollIntervalSeconds());
                     register.setMemoryMaxBytes(memoryMax);
                     register.setCpuCoreCount(cpuCoreCount);
+                    register.setLastPolledAt(Instant.now());
+                    register.setLastSeenUp(Instant.now());
 
                     return serverRegisterRepository.save(register)
                             .doOnSuccess(s -> {
@@ -139,6 +141,8 @@ public class ServerRegisterService {
         RegisteredServerDto dto = new RegisteredServerDto();
         dto.setId(register.getId());
         dto.setAppName(register.getAppName());
+        dto.setAppName(register.getAppName());
+        dto.setAppVersion(register.getAppVersion());
         dto.setServerActuatorUrl(register.getBaseUrl() + register.getActuatorPath());
         dto.setPollIntervalSeconds(register.getPollIntervalSeconds());
         dto.setPause(register.isPause());
