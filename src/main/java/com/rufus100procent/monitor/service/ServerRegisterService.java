@@ -55,7 +55,8 @@ public class ServerRegisterService {
                     register.setStatus("UNKNOWN");
                     register.setPause(false);
                     register.setSecret("monitor-v1-" + UUID.randomUUID());
-                    register.setAppName(data.getName());
+                    register.setAppName(data.getAppName());
+                    register.setAppVersion(data.getAppVersion());
                     register.setBaseUrl(data.getBaseUrl());
                     register.setActuatorPath(data.getActuatorPath());
                     register.setPollIntervalSeconds(data.getPollIntervalSeconds());

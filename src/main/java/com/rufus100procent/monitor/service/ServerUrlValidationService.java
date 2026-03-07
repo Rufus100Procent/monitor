@@ -53,7 +53,7 @@ public class ServerUrlValidationService {
                 .map(status -> {
                     log.info("Health check passed, status={} url={}", status, healthUrl);
                     ServerDto dto = new ServerDto();
-                    dto.setName(finalBase);
+                    dto.setAppName(finalBase);
                     dto.setBaseUrl(finalBase);
                     dto.setActuatorPath(finalActuatorPath);
                     dto.setPollIntervalSeconds(DEFAULT_POLL_INTERVAL);

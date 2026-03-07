@@ -19,6 +19,7 @@ public class ServerRegister implements Persistable<UUID> {
     private boolean isNew = true;
 
     private String appName;
+    private String appVersion;
     private String baseUrl;
     private String actuatorPath;
     private String secret;
@@ -56,6 +57,14 @@ public class ServerRegister implements Persistable<UUID> {
 
     public void setAppName(String appName) {
         this.appName = appName;
+    }
+
+    public String getAppVersion() {
+        return appVersion;
+    }
+
+    public void setAppVersion(String appVersion) {
+        this.appVersion = appVersion;
     }
 
     public String getBaseUrl() {

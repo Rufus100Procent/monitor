@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS server_register (
     id UUID PRIMARY KEY,
     app_name VARCHAR(255) NOT NULL,
+    app_version VARCHAR(20) NOT NULL,
     base_url VARCHAR(500) NOT NULL,
     actuator_path VARCHAR(255) NOT NULL,
     secret VARCHAR(500) NOT NULL,

@@ -1,13 +1,14 @@
 package com.rufus100procent.monitor.dto;
 
 public class ServerDto {
-    private String name;
+    private String appName;
+    private String appVersion;
     private String baseUrl;
     private String actuatorPath;
     private int pollIntervalSeconds;
 
-    public void setName(String name) {
-        this.name = name;
+    public void setAppName(String appName) {
+        this.appName = appName;
     }
 
     public void setBaseUrl(String baseUrl) {
@@ -22,8 +23,16 @@ public class ServerDto {
         this.pollIntervalSeconds = pollIntervalSeconds;
     }
 
-    public String getName() {
-        return name;
+    public String getAppVersion() {
+        return appVersion;
+    }
+
+    public void setAppVersion(String appVersion) {
+        this.appVersion = appVersion;
+    }
+
+    public String getAppName() {
+        return appName;
     }
 
     public String getBaseUrl() {
