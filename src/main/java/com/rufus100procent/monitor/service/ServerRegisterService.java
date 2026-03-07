@@ -112,6 +112,7 @@ public class ServerRegisterService {
                         "Server  not found with id: " + data.getId())))
                 .flatMap(register -> {
                     register.setAppName(data.getAppName());
+                    register.setAppVersion(data.getAppVersion());
                     register.setPollIntervalSeconds(data.getPollIntervalSeconds());
                     register.setPause(data.isPause());
                     register.markAsExisting();

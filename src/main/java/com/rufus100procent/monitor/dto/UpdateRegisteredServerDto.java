@@ -6,6 +6,7 @@ public class UpdateRegisteredServerDto {
 
     private UUID id;
     private String appName;
+    private String appVersion;
     private int pollIntervalSeconds;
     private boolean pause;
 
@@ -23,6 +24,14 @@ public class UpdateRegisteredServerDto {
 
     public void setAppName(String appName) {
         this.appName = appName;
+    }
+
+    public String getAppVersion() {
+        return appVersion;
+    }
+
+    public void setAppVersion(String appVersion) {
+        this.appVersion = appVersion;
     }
 
     public int getPollIntervalSeconds() {
