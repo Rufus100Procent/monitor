@@ -12,28 +12,25 @@ public class ServerSnapshotDto {
     private String healthStatus;
 
     private Long memoryUsedBytes;
-    private Long memoryMaxBytes;
+    private Double systemLoad;
     private Double cpuUsage;
+
     private Double uptimeSeconds;
 
     private Long httpRequestCount;
     private Double httpAvgMs;
-    private Double httpMaxMs;
     private Long http2xxCount;
     private Long http4xxCount;
     private Long http5xxCount;
 
-    private Double systemLoad;
     private Long jvmThreadsLive;
     private Double gcOverhead;
+
     private Long diskTotalBytes;
     private Long diskFreeBytes;
 
     private boolean pollSuccess;
     private String pollErrorMessage;
-
-    private String monitorTimezone;
-    private String monitorLocalTime;
 
     public UUID getId() {
         return id;
@@ -87,22 +84,6 @@ public class ServerSnapshotDto {
         return jvmThreadsLive;
     }
 
-    public String getMonitorTimezone() {
-        return monitorTimezone;
-    }
-
-    public void setMonitorTimezone(String monitorTimezone) {
-        this.monitorTimezone = monitorTimezone;
-    }
-
-    public String getMonitorLocalTime() {
-        return monitorLocalTime;
-    }
-
-    public void setMonitorLocalTime(String monitorLocalTime) {
-        this.monitorLocalTime = monitorLocalTime;
-    }
-
     public void setJvmThreadsLive(Long jvmThreadsLive) {
         this.jvmThreadsLive = jvmThreadsLive;
     }
@@ -129,14 +110,6 @@ public class ServerSnapshotDto {
 
     public void setDiskFreeBytes(Long diskFreeBytes) {
         this.diskFreeBytes = diskFreeBytes;
-    }
-
-    public Long getMemoryMaxBytes() {
-        return memoryMaxBytes;
-    }
-
-    public void setMemoryMaxBytes(Long memoryMaxBytes) {
-        this.memoryMaxBytes = memoryMaxBytes;
     }
 
     public Double getCpuUsage() {
@@ -171,14 +144,6 @@ public class ServerSnapshotDto {
         this.httpAvgMs = httpAvgMs;
     }
 
-    public Double getHttpMaxMs() {
-        return httpMaxMs;
-    }
-
-    public void setHttpMaxMs(Double httpMaxMs) {
-        this.httpMaxMs = httpMaxMs;
-    }
-
     public Long getHttp2xxCount() {
         return http2xxCount;
     }
@@ -211,11 +176,4 @@ public class ServerSnapshotDto {
         this.pollSuccess = pollSuccess;
     }
 
-    public String getPollErrorMessage() {
-        return pollErrorMessage;
-    }
-
-    public void setPollErrorMessage(String pollErrorMessage) {
-        this.pollErrorMessage = pollErrorMessage;
-    }
 }
