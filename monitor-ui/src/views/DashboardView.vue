@@ -1,27 +1,17 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { Plus, LoaderCircle, X } from 'lucide-vue-next'
-import { getServers, registerServer } from '../api'
-import type { Server, RegisterServerBody } from '../api'
+import { registerServer } from '../api/servers'
+import type { RegisterServerBody } from '../api/servers'
+import { useServers } from '../composables/useServers'
 
-// Server list
-const servers = ref<Server[]>([])
-const loading = ref(true)
-const fetchError = ref('')
+const router = useRouter()
 
-async function fetchServers() {
-  loading.value = true
-  fetchError.value = ''
-  try {
-    servers.value = await getServers()
-  } catch (e: unknown) {
-    fetchError.value = e instanceof Error ? e.message : 'Failed to load servers.'
-  } finally {
-    loading.value = false
-  }
-}
+// Shared server state
+const { servers, loading, error: fetchError, fetch: fetchServers, ensureLoaded } = useServers()
 
-onMounted(fetchServers)
+onMounted(ensureLoaded)
 
 // Formatting helpers
 function formatBytes(bytes: number): string {
@@ -118,7 +108,7 @@ async function submitRegister() {
 
         <!-- Card head: name + status -->
         <div class="card-head">
-          <button class="app-name" @click="() => {}">{{ server.appName }}</button>
+          <button class="app-name" @click="router.push(`/server/${server.id}/settings`)">{{ server.appName }}</button>
           <span class="status-badge" :class="server.status === 'UP' ? 'up' : 'down'">
             {{ server.status }}
           </span>
