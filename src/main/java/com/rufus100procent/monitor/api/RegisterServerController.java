@@ -57,14 +57,6 @@ public class RegisterServerController {
                 .onErrorResume(ex -> ApiError.error(ex, HttpStatus.NOT_FOUND));
     }
 
-    @PatchMapping("/{id}/pause")
-    public Mono<ResponseEntity<Object>> togglePause(@PathVariable UUID id,
-                                                    @RequestParam boolean pause) {
-        return registerService.togglePause(id, pause)
-                .map(dto -> ResponseEntity.ok((Object) dto))
-                .onErrorResume(ex -> ApiError.error(ex, HttpStatus.NOT_FOUND));
-    }
-
 //    test connection, check secret works
 
 }

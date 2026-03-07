@@ -134,23 +134,6 @@ public class ServerRegisterService {
                 });
     }
 
-    public Mono<RegisteredServerDto> togglePause(UUID id, boolean pause) {
-        return serverRegisterRepository.findById(id)
-                .switchIfEmpty(Mono.error(new IllegalArgumentException(
-                        "Server not found with id: " + id)))
-                .flatMap(register -> {
-                    register.setPause(pause);
-                    register.markAsExisting();
-                    return serverRegisterRepository.save(register);
-                })
-                .doOnSuccess(s -> {
-                    assert s != null;
-                    log.info("Server {} id={} name={}",
-                            pause ? "paused" : "resumed", s.getId(), s.getAppName());
-                })
-                .map(this::toDto);
-    }
-
     private RegisteredServerDto toDto(ServerRegister register) {
         RegisteredServerDto dto = new RegisteredServerDto();
         dto.setId(register.getId());
