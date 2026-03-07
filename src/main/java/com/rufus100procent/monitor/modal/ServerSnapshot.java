@@ -22,8 +22,6 @@ public class ServerSnapshot implements Persistable<UUID>  {
     private boolean isNew = true;
 
     private Instant polledAt;
-    private String monitorTimezone;
-    private String monitorLocalTime;
 
     private String healthStatus;
     private String appVersion;
@@ -126,22 +124,6 @@ public class ServerSnapshot implements Persistable<UUID>  {
 
     public void setDiskFreeBytes(Long diskFreeBytes) {
         this.diskFreeBytes = diskFreeBytes;
-    }
-
-    public String getMonitorTimezone() {
-        return monitorTimezone;
-    }
-
-    public void setMonitorTimezone(String monitorTimezone) {
-        this.monitorTimezone = monitorTimezone;
-    }
-
-    public String getMonitorLocalTime() {
-        return monitorLocalTime;
-    }
-
-    public void setMonitorLocalTime(String monitorLocalTime) {
-        this.monitorLocalTime = monitorLocalTime;
     }
 
     public String getHealthStatus() {
