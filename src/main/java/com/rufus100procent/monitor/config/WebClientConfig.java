@@ -1,4 +1,4 @@
-package com.rufus100procent.monitor;
+package com.rufus100procent.monitor.config;
 
 
 import org.springframework.context.annotation.Bean;
