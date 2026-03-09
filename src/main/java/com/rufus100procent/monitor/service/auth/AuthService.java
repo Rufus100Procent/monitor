@@ -85,7 +85,12 @@ public class AuthService {
                     return userRepository.save(user)
                             .map(savedUser -> {
                                 assert savedUser.getId() != null;
-                                String token = jwtUtil.generateToken(savedUser.getId(), savedUser.getUsername());
+                                String token = jwtUtil.generateToken(
+                                        savedUser.getId(),
+                                        savedUser.getUsername(),
+                                        savedUser.getRole(),
+                                        savedUser.getCreatedAt()
+                                );
                                 log.info("User logged in: id={}, username={}", savedUser.getId(), savedUser.getUsername());
                                 return new AuthResponse(token);
                             });

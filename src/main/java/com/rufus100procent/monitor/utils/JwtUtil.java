@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -28,13 +29,15 @@ public class JwtUtil {
         this.expirationMs = expirationMs;
     }
 
-    public String generateToken(UUID userId, String username) {
+    public String generateToken(UUID userId, String username, String role, Instant createdAt) {
         try {
             JWTClaimsSet claims = new JWTClaimsSet.Builder()
                     .subject(username)
                     .claim("userId", userId.toString())
+                    .claim("role", role)
+                    .claim("createdAt", createdAt.toString())
                     .claim("scope", List.of("modify"))
-                    .issuer("Job-search-automation")
+                    .issuer("monitor-backend")
                     .issueTime(new Date())
                     .expirationTime(new Date(System.currentTimeMillis() + expirationMs))
                     .build();
