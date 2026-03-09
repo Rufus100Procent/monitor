@@ -40,6 +40,9 @@ public class ServerSnapshot implements Persistable<UUID>  {
     @Column("http_4xx_count")
     private Long http4xxCount;
 
+    @Column("http_3xx_count")
+    private Long http3xxCount;
+
     @Column("http_5xx_count")
     private Long http5xxCount;
 
@@ -91,6 +94,14 @@ public class ServerSnapshot implements Persistable<UUID>  {
 
     public Long getJvmThreadsLive() {
         return jvmThreadsLive;
+    }
+
+    public Long getHttp3xxCount() {
+        return http3xxCount;
+    }
+
+    public void setHttp3xxCount(Long http3xxCount) {
+        this.http3xxCount = http3xxCount;
     }
 
     public void setJvmThreadsLive(Long jvmThreadsLive) {

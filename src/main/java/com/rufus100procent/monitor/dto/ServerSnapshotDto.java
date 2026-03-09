@@ -22,7 +22,7 @@ public class ServerSnapshotDto {
     private Long http2xxCount;
     private Long http4xxCount;
     private Long http5xxCount;
-
+    private Long http3xxCount;
     private Long jvmThreadsLive;
     private Double gcOverhead;
 
@@ -30,7 +30,6 @@ public class ServerSnapshotDto {
     private Long diskFreeBytes;
 
     private boolean pollSuccess;
-    private String pollErrorMessage;
 
     public UUID getId() {
         return id;
@@ -78,6 +77,14 @@ public class ServerSnapshotDto {
 
     public void setSystemLoad(Double systemLoad) {
         this.systemLoad = systemLoad;
+    }
+
+    public Long getHttp3xxCount() {
+        return http3xxCount;
+    }
+
+    public void setHttp3xxCount(Long http3xxCount) {
+        this.http3xxCount = http3xxCount;
     }
 
     public Long getJvmThreadsLive() {

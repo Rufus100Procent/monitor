@@ -130,6 +130,7 @@ public class PollingEngine {
                 actuatorClient.fetchMetricStatistic(base, path, HTTP_REQUESTS, "COUNT"),
                 actuatorClient.fetchMetricStatistic(base, path, HTTP_REQUESTS, "TOTAL_TIME"),
                 actuatorClient.fetchMetricByOutcome(base, path, HTTP_REQUESTS, "SUCCESS"),
+                actuatorClient.fetchMetricByOutcome(base, path, HTTP_REQUESTS, "REDIRECTION"),
                 actuatorClient.fetchMetricByOutcome(base, path, HTTP_REQUESTS, "CLIENT_ERROR"),
                 actuatorClient.fetchMetricByOutcome(base, path, HTTP_REQUESTS, "SERVER_ERROR")
         ).map(t2 -> buildSnapshot(server, t, t2)));
@@ -139,7 +140,7 @@ public class PollingEngine {
     private ServerSnapshot buildSnapshot(
             ServerRegister server,
             Tuple7<ActuatorClient.HealthResult, String, Double, Double, Double, Double, Double> t,
-            Tuple6<Double, Double, Double, Double, Double, Double> t2) {
+            Tuple7<Double, Double, Double, Double, Double, Double, Double> t2) {
 
         ActuatorClient.HealthResult health = t.getT1();
         double count = t2.getT2();
@@ -160,6 +161,7 @@ public class PollingEngine {
         snapshot.setHttp2xxCount(t2.getT4().longValue());
         snapshot.setHttp4xxCount(t2.getT5().longValue());
         snapshot.setHttp5xxCount(t2.getT6().longValue());
+        snapshot.setHttp3xxCount(t2.getT7().longValue());
         snapshot.setDiskTotalBytes(health.diskTotal());
         snapshot.setDiskFreeBytes(health.diskFree());
         snapshot.setPollSuccess(!"DOWN".equals(health.status()));

@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS server_snapshots (
     http_request_count BIGINT,
     http_avg_ms DOUBLE PRECISION,
     http_2xx_count BIGINT,
+    http_3xx_count BIGINT,
     http_4xx_count BIGINT,
     http_5xx_count BIGINT,
     jvm_threads_live BIGINT,
