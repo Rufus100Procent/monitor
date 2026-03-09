@@ -25,3 +25,26 @@ memory, CPU, uptime and HTTP metrics in one place
 management.endpoints.web.exposure.include=health,info,metrics
 management.endpoint.health.show-details=always
 ```
+
+#### Register
+```
+curl -X POST http://localhost:8080/api/v0/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username": "admin", "password": "password1"}'
+```
+Response:
+```
+"Successfully created user: <uuid>"
+```
+
+#### Login
+```
+curl -X POST http://localhost:8090/api/v0/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "admin", "password": "password1"}'
+```
+Response:
+```
+{ "accessToken": "eyJhbGciOi..." }
+```
+
