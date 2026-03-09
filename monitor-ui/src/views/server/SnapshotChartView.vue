@@ -45,8 +45,11 @@ const chartCtx = computed(() => {
   return { labels }
 })
 
-function dataset(getValue: (s: Snapshot) => number): number[] {
-  return props.snapshots.map(s => parseFloat(getValue(s).toFixed(4)))
+function dataset(getValue: (s: Snapshot) => number | null): (number | null)[] {
+  return props.snapshots.map(s => {
+    const v = getValue(s)
+    return v == null ? null : parseFloat(v.toFixed(4))
+  })
 }
 
 // Chart options
@@ -122,14 +125,16 @@ const chartKey = computed(() => dark.value ? 'dark' : 'light')
 const http = computed(() => {
   const s = props.snapshots[props.snapshots.length - 1] ?? null
   if (!s) return { total: '—', c2xx: '—', c3xx: '—', c4xx: '—', c5xx: '—', p2xx: '—', p3xx: '—', p4xx: '—', p5xx: '—' }
-  const sum = s.http2xxCount + s.http3xxCount + s.http4xxCount + s.http5xxCount
+  const n2 = s.http2xxCount ?? 0, n3 = s.http3xxCount ?? 0
+  const n4 = s.http4xxCount ?? 0, n5 = s.http5xxCount ?? 0
+  const sum = n2 + n3 + n4 + n5
   const p   = (n: number) => sum > 0 ? `${((n / sum) * 100).toFixed(1)}%` : '0.0%'
   return {
-    total: s.httpRequestCount.toLocaleString(),
-    c2xx: s.http2xxCount.toLocaleString(), p2xx: p(s.http2xxCount),
-    c3xx: s.http3xxCount.toLocaleString(), p3xx: p(s.http3xxCount),
-    c4xx: s.http4xxCount.toLocaleString(), p4xx: p(s.http4xxCount),
-    c5xx: s.http5xxCount.toLocaleString(), p5xx: p(s.http5xxCount),
+    total: (s.httpRequestCount ?? 0).toLocaleString(),
+    c2xx: n2.toLocaleString(), p2xx: p(n2),
+    c3xx: n3.toLocaleString(), p3xx: p(n3),
+    c4xx: n4.toLocaleString(), p4xx: p(n4),
+    c5xx: n5.toLocaleString(), p5xx: p(n5),
   }
 })
 </script>

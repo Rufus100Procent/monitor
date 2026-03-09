@@ -39,23 +39,39 @@ function fmtTime(iso: string): string {
 }
 
 function fmtHeap(s: Snapshot): string {
+  if (s.memoryUsedBytes == null) return '—'
   const mb = s.memoryUsedBytes / (1024 ** 2)
   if (mb >= 1024) return (mb / 1024).toFixed(2) + ' GB'
   return Math.round(mb) + ' MB'
 }
 
 function fmtGc(s: Snapshot): string {
+  if (s.gcOverhead == null) return '—'
   const p = s.gcOverhead * 100
   return p < 0.01 ? '<0.01%' : p.toFixed(2) + '%'
 }
 
-function cpuColor(pct: number): string {
+function fmtCpu(s: Snapshot): string {
+  if (s.cpuUsage == null) return '—'
+  return (s.cpuUsage * 100).toFixed(1) + '%'
+}
+
+function fmtAvgMs(s: Snapshot): string {
+  if (s.httpAvgMs == null) return '—'
+  return s.httpAvgMs.toFixed(1) + ' ms'
+}
+
+function cpuColor(s: Snapshot): string {
+  if (s.cpuUsage == null) return 'var(--text-muted)'
+  const pct = s.cpuUsage * 100
   if (pct > 85) return 'hsl(0,85%,60%)'
   if (pct > 65) return 'hsl(38,95%,55%)'
   return 'hsl(142,70%,45%)'
 }
 
-function gcColor(pct: number): string {
+function gcColor(s: Snapshot): string {
+  if (s.gcOverhead == null) return 'var(--text-muted)'
+  const pct = s.gcOverhead * 100
   if (pct > 5) return 'hsl(0,85%,60%)'
   if (pct > 2) return 'hsl(38,95%,55%)'
   return 'hsl(142,70%,45%)'
@@ -105,27 +121,23 @@ function healthBg(status: string): string {
               </span>
             </td>
             <td data-label="CPU Usage">
-              <span class="td-val" :style="{ color: cpuColor(s.cpuUsage * 100) }">
-                {{ (s.cpuUsage * 100).toFixed(1) }}%
-              </span>
+              <span class="td-val" :style="{ color: cpuColor(s) }">{{ fmtCpu(s) }}</span>
             </td>
             <td class="td-val" data-label="JVM Heap">{{ fmtHeap(s) }}</td>
             <td data-label="GC Overhead">
-              <span class="td-val" :style="{ color: gcColor(s.gcOverhead * 100) }">
-                {{ fmtGc(s) }}
-              </span>
+              <span class="td-val" :style="{ color: gcColor(s) }">{{ fmtGc(s) }}</span>
             </td>
-            <td class="td-val sep" data-label="Avg Response">{{ s.httpAvgMs.toFixed(1) }} ms</td>
-            <td class="td-val c-2xx" data-label="2xx">{{ s.http2xxCount.toLocaleString() }}</td>
-            <td class="td-val c-3xx" data-label="3xx">{{ s.http3xxCount.toLocaleString() }}</td>
+            <td class="td-val sep" data-label="Avg Response">{{ fmtAvgMs(s) }}</td>
+            <td class="td-val c-2xx" data-label="2xx">{{ (s.http2xxCount ?? 0).toLocaleString() }}</td>
+            <td class="td-val c-3xx" data-label="3xx">{{ (s.http3xxCount ?? 0).toLocaleString() }}</td>
             <td data-label="4xx">
-              <span class="td-val" :style="{ color: s.http4xxCount > 0 ? 'hsl(48,90%,40%)' : 'var(--text-secondary)' }">
-                {{ s.http4xxCount.toLocaleString() }}
+              <span class="td-val" :style="{ color: (s.http4xxCount ?? 0) > 0 ? 'hsl(48,90%,40%)' : 'var(--text-secondary)' }">
+                {{ (s.http4xxCount ?? 0).toLocaleString() }}
               </span>
             </td>
             <td data-label="5xx">
-              <span class="td-val" :style="{ color: s.http5xxCount > 0 ? 'hsl(0,85%,60%)' : 'var(--text-secondary)' }">
-                {{ s.http5xxCount.toLocaleString() }}
+              <span class="td-val" :style="{ color: (s.http5xxCount ?? 0) > 0 ? 'hsl(0,85%,60%)' : 'var(--text-secondary)' }">
+                {{ (s.http5xxCount ?? 0).toLocaleString() }}
               </span>
             </td>
           </tr>
