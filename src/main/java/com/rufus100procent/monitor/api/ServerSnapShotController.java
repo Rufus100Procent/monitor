@@ -1,12 +1,10 @@
 package com.rufus100procent.monitor.api;
 
-import com.rufus100procent.monitor.dto.ServerSnapshotDto;
 import com.rufus100procent.monitor.service.ServerSnapshotService;
 import com.rufus100procent.monitor.utils.ApiError;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Instant;
@@ -24,14 +22,14 @@ public class ServerSnapShotController {
     }
 
     @GetMapping("/{serverId}")
-    public Flux<ServerSnapshotDto> getSnapshots(
+    public Mono<ServerSnapshotService.PagedSnapshotResponse> getSnapshots(
             @PathVariable UUID serverId,
             @RequestParam(required = false) Instant from,
             @RequestParam(required = false) Instant to,
-            @RequestParam(required = false, defaultValue = "DESC") String sort,
-            @RequestParam(required = false, defaultValue = "50") int limit) {
+            @RequestParam(required = false, defaultValue = "50") int size,
+            @RequestParam(required = false, defaultValue = "0") int page) {
 
-        return snapshotService.getSnapshots(serverId, from, to, sort, limit);
+        return snapshotService.getSnapshots(serverId, from, to, size, page);
     }
 
     @GetMapping("/{serverId}/latest")
@@ -46,18 +44,23 @@ public class ServerSnapShotController {
 # latest snapshot
 GET /api/v0/snapshot/{serverId}/latest
 
-# last 50 newest first (default)
+# page 0, size 50 newest first (default)
 GET /api/v0/snapshot/{serverId}
 
-# last 100 newest first
-GET /api/v0/snapshot/{serverId}?limit=100
+# page 0, size 100 newest first
+GET /api/v0/snapshot/{serverId}?size=100
 
-# oldest first
-GET /api/v0/snapshot/{serverId}?sort=ASC
+# page 1, size 50 newest first
+GET /api/v0/snapshot/{serverId}?page=1
 
-# specific date range
+# page 2, size 80 newest first
+GET /api/v0/snapshot/{serverId}?page=2&size=80
+
+# specific date range, page 0, size 50 newest first
 GET /api/v0/snapshot/{serverId}?from=2026-03-01T00:00:00Z&to=2026-03-01T23:59:59Z
 
-# yesterday oldest to newest, 200 results
-GET /api/v0/snapshot/{serverId}?from=2026-03-03T00:00:00Z&to=2026-03-03T23:59:59Z&sort=ASC&limit=200
- */
+# specific date range, page 1, size 200
+GET /api/v0/snapshot/{serverId}?from=2026-03-03T00:00:00Z&to=2026-03-03T23:59:59Z&page=1&size=200
+
+GET /api/v0/snapshot/{serverId}?from=2026-03-01T00:00:00Z&to=2026-03-07T23:59:59Z&page=0&size=100
+*/

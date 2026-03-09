@@ -17,16 +17,22 @@ public interface ServerSnapshotRepository extends ReactiveCrudRepository<ServerS
             SELECT * FROM server_snapshots
             WHERE server_id = :serverId
             AND polled_at BETWEEN :from AND :to
-            ORDER BY
-                CASE WHEN :sort = 'ASC' THEN polled_at END ASC,
-                CASE WHEN :sort = 'DESC' THEN polled_at END DESC
-            LIMIT :limit
+            ORDER BY polled_at DESC
+            LIMIT :size OFFSET :offset
             """)
     Flux<ServerSnapshot> findSnapshots(UUID serverId,
                                        Instant from,
                                        Instant to,
-                                       String sort,
-                                       int limit);
+                                       int size,
+                                       int offset);
+
+    @Query("""
+            SELECT COUNT(*) FROM server_snapshots
+            WHERE server_id = :serverId
+            AND polled_at BETWEEN :from AND :to
+            """)
+    Mono<Long> countSnapshots(UUID serverId, Instant from, Instant to);
+
 
     Mono<ServerSnapshot> findTopByServerIdOrderByPolledAtDesc(UUID serverId);
 }
