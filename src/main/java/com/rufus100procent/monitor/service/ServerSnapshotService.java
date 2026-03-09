@@ -133,4 +133,7 @@ public class ServerSnapshotService {
         dto.setPollSuccess(snapshot.isPollSuccess());
         return dto;
     }
+    public Mono<ServerSnapshot> findLatestRaw(UUID serverId) {
+        return snapshotRepository.findTopByServerIdOrderByPolledAtDesc(serverId);
+    }
 }

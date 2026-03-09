@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple6;
 import reactor.util.function.Tuple7;
 
 import java.time.Duration;
@@ -44,7 +43,7 @@ public class PollingEngine {
         this.actuatorClient = actuatorClient;
     }
 
-//    @PostConstruct
+    @PostConstruct
     public void init() {
         log.info("PollingEngine starting");
         Flux.interval(Duration.ZERO, Duration.ofSeconds(2))
@@ -133,17 +132,57 @@ public class PollingEngine {
                 actuatorClient.fetchMetricByOutcome(base, path, HTTP_REQUESTS, "REDIRECTION"),
                 actuatorClient.fetchMetricByOutcome(base, path, HTTP_REQUESTS, "CLIENT_ERROR"),
                 actuatorClient.fetchMetricByOutcome(base, path, HTTP_REQUESTS, "SERVER_ERROR")
-        ).map(t2 -> buildSnapshot(server, t, t2)));
+        ).flatMap(t2 -> serverSnapshotService.findLatestRaw(server.getId())
+                .map(prev -> buildSnapshot(server, t, t2, prev))
+                .switchIfEmpty(Mono.fromCallable(() -> buildSnapshot(server, t, t2, null)))
+        ));
     }
 
-    // build snapshot from collected data
     private ServerSnapshot buildSnapshot(
             ServerRegister server,
             Tuple7<ActuatorClient.HealthResult, String, Double, Double, Double, Double, Double> t,
-            Tuple7<Double, Double, Double, Double, Double, Double, Double> t2) {
+            Tuple7<Double, Double, Double, Double, Double, Double, Double> t2,
+            ServerSnapshot prev) {
 
         ActuatorClient.HealthResult health = t.getT1();
-        double count = t2.getT2();
+
+        double cumulativeCount = t2.getT2();
+        double cumulativeTime  = t2.getT3();
+        double cumulative2xx   = t2.getT4();
+        double cumulative3xx   = t2.getT5();
+        double cumulative4xx   = t2.getT6();
+        double cumulative5xx   = t2.getT7();
+
+        // detect redeploy — app restarted and counters reset back to zero
+        boolean appRestarted = prev != null && cumulativeCount < prev.getHttpRequestCount();
+
+        // requests that happened in this poll window only (since last snapshot)
+        long requestsThisPoll;
+        long requests2xxThisPoll;
+        long requests3xxThisPoll;
+        long requests4xxThisPoll;
+        long requests5xxThisPoll;
+        double totalTimeThisPoll;
+
+        if (prev == null || appRestarted) {
+            // first snapshot ever, or app just restarted
+            // no previous baseline to subtract from — use current cumulative as starting point
+            requestsThisPoll      = (long) cumulativeCount;
+            totalTimeThisPoll     = cumulativeTime;
+            requests2xxThisPoll   = (long) cumulative2xx;
+            requests3xxThisPoll   = (long) cumulative3xx;
+            requests4xxThisPoll   = (long) cumulative4xx;
+            requests5xxThisPoll   = (long) cumulative5xx;
+        } else {
+            // normal poll — subtract what we already counted last time
+            // result = only the requests that arrived since the previous snapshot
+            requestsThisPoll    = Math.max(0, (long) cumulativeCount - prev.getHttpRequestCount());
+            totalTimeThisPoll   = Math.max(0, cumulativeTime - (prev.getHttpAvgMs() * prev.getHttpRequestCount() / 1000.0));
+            requests2xxThisPoll = Math.max(0, (long) cumulative2xx - prev.getHttp2xxCount());
+            requests3xxThisPoll = Math.max(0, (long) cumulative3xx - prev.getHttp3xxCount());
+            requests4xxThisPoll = Math.max(0, (long) cumulative4xx - prev.getHttp4xxCount());
+            requests5xxThisPoll = Math.max(0, (long) cumulative5xx - prev.getHttp5xxCount());
+        }
 
         ServerSnapshot snapshot = new ServerSnapshot();
         snapshot.setId(UUID.randomUUID());
@@ -156,12 +195,12 @@ public class PollingEngine {
         snapshot.setUptimeSeconds(t.getT6());
         snapshot.setJvmThreadsLive(t.getT7().longValue());
         snapshot.setGcOverhead(t2.getT1());
-        snapshot.setHttpRequestCount((long) count);
-        snapshot.setHttpAvgMs(count > 0 ? (t2.getT3() / count) * 1000 : 0.0);
-        snapshot.setHttp2xxCount(t2.getT4().longValue());
-        snapshot.setHttp4xxCount(t2.getT5().longValue());
-        snapshot.setHttp5xxCount(t2.getT6().longValue());
-        snapshot.setHttp3xxCount(t2.getT7().longValue());
+        snapshot.setHttpRequestCount(requestsThisPoll);
+        snapshot.setHttpAvgMs(requestsThisPoll > 0 ? (totalTimeThisPoll / requestsThisPoll) * 1000 : 0.0);
+        snapshot.setHttp2xxCount(requests2xxThisPoll);
+        snapshot.setHttp3xxCount(requests3xxThisPoll);
+        snapshot.setHttp4xxCount(requests4xxThisPoll);
+        snapshot.setHttp5xxCount(requests5xxThisPoll);
         snapshot.setDiskTotalBytes(health.diskTotal());
         snapshot.setDiskFreeBytes(health.diskFree());
         snapshot.setPollSuccess(!"DOWN".equals(health.status()));
