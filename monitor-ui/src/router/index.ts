@@ -17,6 +17,12 @@ const router = createRouter({
       component: () => import('../views/FaqView.vue'),
     },
     {
+      path: '/about',
+      name: 'About',
+      meta: { title: 'About' },
+      component: () => import('../views/AboutView.vue'),
+    },
+    {
       path: '/profile',
       name: 'Profile',
       meta: { title: 'Profile' },
