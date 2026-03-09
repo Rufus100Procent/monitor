@@ -94,6 +94,20 @@ public class ServerSnapshotService {
         snapshot.setServerId(server.getId());
         snapshot.setPolledAt(Instant.now());
         snapshot.setHealthStatus("DOWN");
+        snapshot.setMemoryUsedBytes(0L);
+        snapshot.setCpuUsage(0.0);
+        snapshot.setSystemLoad(0.0);
+        snapshot.setUptimeSeconds(0.0);
+        snapshot.setJvmThreadsLive(0L);
+        snapshot.setGcOverhead(0.0);
+        snapshot.setHttpRequestCount(0L);
+        snapshot.setHttpAvgMs(0.0);
+        snapshot.setHttp2xxCount(0L);
+        snapshot.setHttp3xxCount(0L);
+        snapshot.setHttp4xxCount(0L);
+        snapshot.setHttp5xxCount(0L);
+        snapshot.setDiskTotalBytes(0L);
+        snapshot.setDiskFreeBytes(0L);
         snapshot.setPollSuccess(false);
         return snapshotRepository.save(snapshot)
                 .doOnError(e -> log.error("Failed to save failed-snapshot for server={} reason={}",
