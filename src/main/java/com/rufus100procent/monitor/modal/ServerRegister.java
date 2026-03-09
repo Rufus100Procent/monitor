@@ -18,6 +18,8 @@ public class ServerRegister implements Persistable<UUID> {
     @Transient
     private boolean isNew = true;
 
+    private UUID userId;
+
     private String appName;
     private String appVersion;
     private String baseUrl;
@@ -89,6 +91,14 @@ public class ServerRegister implements Persistable<UUID> {
 
     public void setSecret(String secret) {
         this.secret = secret;
+    }
+
+    public UUID getUserId() {
+        return userId;
+    }
+
+    public void setUserId(UUID userId) {
+        this.userId = userId;
     }
 
     public int getPollIntervalSeconds() {

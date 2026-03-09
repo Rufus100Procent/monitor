@@ -1,5 +1,15 @@
+CREATE TABLE IF NOT EXISTS monitor_users (
+    id UUID PRIMARY KEY,
+    username VARCHAR(255) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    role VARCHAR(50) NOT NULL DEFAULT 'ROLE_ADMIN',
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    last_login_at TIMESTAMP WITH TIME ZONE
+    );
+
 CREATE TABLE IF NOT EXISTS server_register (
     id UUID PRIMARY KEY,
+    user_id UUID NOT NULL,
     app_name VARCHAR(255) NOT NULL,
     app_version VARCHAR(20) NOT NULL,
     base_url VARCHAR(500) NOT NULL,
@@ -40,11 +50,8 @@ CREATE TABLE IF NOT EXISTS server_snapshots (
     CONSTRAINT fk_server FOREIGN KEY (server_id) REFERENCES server_register (id) ON DELETE CASCADE
     );
 
-CREATE INDEX IF NOT EXISTS idx_snapshots_server_id
-    ON server_snapshots (server_id);
 
-CREATE INDEX IF NOT EXISTS idx_snapshots_polled_at
-    ON server_snapshots (polled_at DESC);
-
-CREATE INDEX IF NOT EXISTS idx_snapshots_server_polled
-    ON server_snapshots (server_id, polled_at DESC);
+CREATE INDEX IF NOT EXISTS idx_snapshots_server_id ON server_snapshots (server_id);
+CREATE INDEX IF NOT EXISTS idx_snapshots_polled_at ON server_snapshots (polled_at DESC);
+CREATE INDEX IF NOT EXISTS idx_snapshots_server_polled ON server_snapshots (server_id, polled_at DESC);
+CREATE INDEX IF NOT EXISTS idx_server_register_user_id ON server_register (user_id);

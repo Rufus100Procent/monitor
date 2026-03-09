@@ -51,6 +51,7 @@ public class ServerRegisterService {
 
                     ServerRegister register = new ServerRegister();
                     register.setId(UUID.randomUUID());
+                    register.setUserId(UUID.randomUUID());
                     register.setRegisteredAt(Instant.now());
                     register.setStatus("UP");
                     register.setPause(false);
