@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { LayoutDashboard, HelpCircle, UserRound, Info, SatelliteDish, Settings } from 'lucide-vue-next'
+import { LayoutDashboard, HelpCircle, UserRound, Info, SatelliteDish, Settings,
+  BookOpen } from 'lucide-vue-next'
 import { useSidebar } from '../composables/useSidebar'
 import { useServers } from '../composables/useServers'
 
@@ -83,6 +84,10 @@ watch(activeServerId, (id) => {
     </div>
 
     <div class="sidebar-bottom">
+      <RouterLink to="/about" class="nav-item" activeClass="active">
+        <BookOpen :size="17" />
+        <span>About</span>
+      </RouterLink>
       <RouterLink to="/faq" class="nav-item" activeClass="active">
         <HelpCircle :size="17" />
         <span>FAQ</span>
@@ -111,8 +116,8 @@ watch(activeServerId, (id) => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 16px 12px 12px;
+  gap: 2px;
+  padding: 12px 10px 10px;
   overflow-y: auto;
 }
 
@@ -155,8 +160,8 @@ hr {
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 8px 10px;
+  gap: 8px;
+  padding: 6px 9px;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 500;
@@ -224,7 +229,7 @@ hr {
   display: flex;
   align-items: center;
   gap: 7px;
-  padding: 7px 10px;
+  padding: 6px 9px;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 500;
