@@ -14,4 +14,6 @@ public interface ServerRegisterRepository extends ReactiveCrudRepository<ServerR
 
     Flux<ServerRegister> findAllByPauseFalse();
 
+    Mono<ServerRegister> findByIdAndUserId(UUID id, UUID userId);
+    Flux<ServerRegister> findAllByUserId(UUID userId);
 }

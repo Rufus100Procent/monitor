@@ -29,53 +29,53 @@ public class ServerRegisterService {
 
 //    /actuator/metrics/jvm.memory.max
 //    /actuator/metrics/system.cpu.count
-    public Mono<String> registerServer(ServerDto data) {
+    public Mono<String> registerServer(ServerDto data, UUID userId) {
         return serverRegisterRepository.existsByBaseUrlAndActuatorPath(
-                        data.getBaseUrl(), data.getActuatorPath())
-                .filter(exists -> !exists)
-                .switchIfEmpty(Mono.error(new IllegalStateException(
-                        "Server already registered with url: " + data.getBaseUrl() + data.getActuatorPath())))
-                .flatMap(_ -> Mono.zip(
-                        actuatorClient.fetchMemoryMax(data.getBaseUrl(), data.getActuatorPath()),
-                        actuatorClient.fetchCpuCoreCount(data.getBaseUrl(), data.getActuatorPath())
-                ))
-                .flatMap(tuple -> {
-                    long memoryMax   = tuple.getT1();
-                    int cpuCoreCount = tuple.getT2();
+                    data.getBaseUrl(), data.getActuatorPath())
+            .filter(exists -> !exists)
+            .switchIfEmpty(Mono.error(new IllegalStateException(
+                    "Server already registered with url: " + data.getBaseUrl() + data.getActuatorPath())))
+            .flatMap(_ -> Mono.zip(
+                    actuatorClient.fetchMemoryMax(data.getBaseUrl(), data.getActuatorPath()),
+                    actuatorClient.fetchCpuCoreCount(data.getBaseUrl(), data.getActuatorPath())
+            ))
+            .flatMap(tuple -> {
+                long memoryMax   = tuple.getT1();
+                int cpuCoreCount = tuple.getT2();
 
-                    if (memoryMax == 0L) {
-                        return Mono.error(new IllegalStateException(
-                                "Could not reach actuator at: " + data.getBaseUrl() + data.getActuatorPath()
-                                        + " — is the actuator exposed and reachable?"));
-                    }
+                if (memoryMax == 0L) {
+                    return Mono.error(new IllegalStateException(
+                            "Could not reach actuator at: " + data.getBaseUrl() + data.getActuatorPath()
+                                    + " — is the actuator exposed and reachable?"));
+                }
 
-                    ServerRegister register = new ServerRegister();
-                    register.setId(UUID.randomUUID());
-                    register.setUserId(UUID.randomUUID());
-                    register.setRegisteredAt(Instant.now());
-                    register.setStatus("UP");
-                    register.setPause(false);
-                    register.setSecret("monitor-v1-" + UUID.randomUUID());
-                    register.setAppName(data.getAppName());
-                    register.setAppVersion(data.getAppVersion());
-                    register.setBaseUrl(data.getBaseUrl());
-                    register.setActuatorPath(data.getActuatorPath());
-                    register.setPollIntervalSeconds(data.getPollIntervalSeconds());
-                    register.setMemoryMaxBytes(memoryMax);
-                    register.setCpuCoreCount(cpuCoreCount);
-                    register.setLastPolledAt(Instant.now());
-                    register.setLastSeenUp(Instant.now());
+                ServerRegister register = new ServerRegister();   // isNew = true by default
+                register.setId(UUID.randomUUID());
+                register.setUserId(userId);                        // ← from JWT
+                register.setRegisteredAt(Instant.now());
+                register.setStatus("UP");
+                register.setPause(false);
+                register.setSecret("monitor-v1-" + UUID.randomUUID());
+                register.setAppName(data.getAppName());
+                register.setAppVersion(data.getAppVersion());
+                register.setBaseUrl(data.getBaseUrl());
+                register.setActuatorPath(data.getActuatorPath());
+                register.setPollIntervalSeconds(data.getPollIntervalSeconds());
+                register.setMemoryMaxBytes(memoryMax);
+                register.setCpuCoreCount(cpuCoreCount);
+                register.setLastPolledAt(Instant.now());
+                register.setLastSeenUp(Instant.now());
 
-                    return serverRegisterRepository.save(register)
-                            .doOnSuccess(s -> {
-                                assert s != null;
-                                log.info(
-                                        "Server registered id={} name={} url={}{} memoryMax={} cpuCores={}",
-                                        s.getId(), s.getAppName(), s.getBaseUrl(), s.getActuatorPath(),
-                                        s.getMemoryMaxBytes(), s.getCpuCoreCount());
-                            })
-                            .map(ServerRegister::getSecret);
-                });
+                return serverRegisterRepository.save(register)
+                        .doOnSuccess(s -> {
+                            assert s != null;
+                            log.info(
+                                    "Server registered id={} name={} url={}{} memoryMax={} cpuCores={}",
+                                    s.getId(), s.getAppName(), s.getBaseUrl(), s.getActuatorPath(),
+                                    s.getMemoryMaxBytes(), s.getCpuCoreCount());
+                        })
+                        .map(ServerRegister::getSecret);
+            });
     }
 
     public Mono<Void> updateAfterPoll(ServerRegister server, String health) {
@@ -97,22 +97,22 @@ public class ServerRegisterService {
                 .then();
     }
 
-    public Mono<RegisteredServerDto> getServerById(UUID id) {
-        return serverRegisterRepository.findById(id)
+    public Mono<RegisteredServerDto> getServerById(UUID id, UUID userId) {
+        return serverRegisterRepository.findByIdAndUserId(id, userId)
                 .switchIfEmpty(Mono.error(new IllegalArgumentException(
                         " Server not found with id: " + id)))
                 .map(this::toDto);
     }
 
-    public Flux<RegisteredServerDto> getAllServers() {
-        return serverRegisterRepository.findAll()
+    public Flux<RegisteredServerDto> getAllServers(UUID userId) {
+        return serverRegisterRepository.findAllByUserId(userId)
                 .map(this::toDto);
     }
 
-    public Mono<RegisteredServerDto> updateServer(UpdateRegisteredServerDto data) {
-        return serverRegisterRepository.findById(data.getId())
+    public Mono<RegisteredServerDto> updateServer(UpdateRegisteredServerDto data, UUID userId) {
+        return serverRegisterRepository.findByIdAndUserId(data.getId(), userId)
                 .switchIfEmpty(Mono.error(new IllegalArgumentException(
-                        "Server  not found with id: " + data.getId())))
+                        "Server not found with id: " + data.getId())))
                 .flatMap(register -> {
                     register.setAppName(data.getAppName());
                     register.setAppVersion(data.getAppVersion());
@@ -128,8 +128,8 @@ public class ServerRegisterService {
                 .map(this::toDto);
     }
 
-    public Mono<Void> deleteServer(UUID id) {
-        return serverRegisterRepository.findById(id)
+    public Mono<Void> deleteServer(UUID id, UUID userId) {
+        return serverRegisterRepository.findByIdAndUserId(id, userId)
                 .switchIfEmpty(Mono.error(new IllegalArgumentException(
                         "Server not found with id: " + id)))
                 .flatMap(server -> {

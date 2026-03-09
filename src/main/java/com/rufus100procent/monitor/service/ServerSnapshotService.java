@@ -39,6 +39,7 @@ public class ServerSnapshotService {
     ) {}
 
     public Mono<PagedSnapshotResponse> getSnapshots(UUID serverId,
+                                                    UUID userId,
                                                     Instant from,
                                                     Instant to,
                                                     int size,
@@ -49,12 +50,11 @@ public class ServerSnapshotService {
         Instant resolvedFrom = from != null ? from : Instant.EPOCH;
         Instant resolvedTo   = to != null ? to : Instant.now();
 
-        return serverRegisterRepository.findById(serverId)
+        return serverRegisterRepository.findByIdAndUserId(serverId, userId)
                 .switchIfEmpty(Mono.error(new IllegalArgumentException(
                         "Server not found with id: " + serverId)))
                 .flatMap(_ -> Mono.zip(
-                        snapshotRepository.findSnapshots(
-                                        serverId, resolvedFrom, resolvedTo, resolvedSize, offset)
+                        snapshotRepository.findSnapshots(serverId, resolvedFrom, resolvedTo, resolvedSize, offset)
                                 .map(this::toDto)
                                 .collectList(),
                         snapshotRepository.countSnapshots(serverId, resolvedFrom, resolvedTo)
@@ -75,8 +75,17 @@ public class ServerSnapshotService {
                 });
     }
 
+    public Mono<ServerSnapshotDto> getLatest(UUID serverId, UUID userId) {
+        return serverRegisterRepository.findByIdAndUserId(serverId, userId)
+                .switchIfEmpty(Mono.error(new IllegalArgumentException(
+                        "Server not found with id: " + serverId)))
+                .flatMap(_ -> snapshotRepository.findTopByServerIdOrderByPolledAtDesc(serverId))
+                .switchIfEmpty(Mono.error(new IllegalArgumentException(
+                        "No snapshots found for server: " + serverId)))
+                .map(this::toDto);
+    }
 
-        public Mono<ServerSnapshot> saveSnapshot(ServerSnapshot snapshot) {
+    public Mono<ServerSnapshot> saveSnapshot(ServerSnapshot snapshot) {
         return snapshotRepository.save(snapshot)
                 .doOnSuccess(s -> {
                     assert s != null;
@@ -112,16 +121,6 @@ public class ServerSnapshotService {
         return snapshotRepository.save(snapshot)
                 .doOnError(e -> log.error("Failed to save failed-snapshot for server={} reason={}",
                         server.getAppName(), e.getMessage()));
-    }
-
-    public Mono<ServerSnapshotDto> getLatest(UUID serverId) {
-        return serverRegisterRepository.findById(serverId)
-                .switchIfEmpty(Mono.error(new IllegalArgumentException(
-                        "Server not found with id: " + serverId)))
-                .flatMap(_ -> snapshotRepository.findTopByServerIdOrderByPolledAtDesc(serverId))
-                .switchIfEmpty(Mono.error(new IllegalArgumentException(
-                        "No snapshots found for server: " + serverId)))
-                .map(this::toDto);
     }
 
     private ServerSnapshotDto toDto(ServerSnapshot snapshot) {
