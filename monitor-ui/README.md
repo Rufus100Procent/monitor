@@ -25,3 +25,13 @@ bun lint
 # Page Dashboard
 
 ![img.png](0.2.0-dashboard.png)
+
+
+#  Basics Page
+ * SnapShotChartView
+
+![img.png](snapshotchartview.png)
+
+* SnapShot Table View
+
+![img_1.png](snapshottableview.png)
