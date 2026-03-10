@@ -147,6 +147,9 @@ async function submit() {
   width: 100%;
   max-width: 420px;
   box-shadow: 0 24px 48px hsl(220, 20%, 5%, 0.2);
+  position: static;
+  margin: 0;
+  padding: 0;
 }
 
 .modal-head {
