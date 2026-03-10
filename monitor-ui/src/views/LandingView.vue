@@ -163,8 +163,7 @@ const METRICS = [
           <div class="section-eyebrow">What's monitored</div>
           <h2 class="section-title">Everything you need to watch</h2>
           <p class="section-sub">
-            Ten live metrics polled directly from your actuator endpoint —
-            no agents, no plugins, just a URL.
+            Ten live metrics polled directly from your actuator endpoint.
           </p>
 
           <div class="metrics-grid">
@@ -315,7 +314,7 @@ const METRICS = [
 
 .hero {
   text-align: center;
-  max-width: 580px;
+  max-width: 660px;
   margin: 0 auto;
 }
 
@@ -329,7 +328,7 @@ const METRICS = [
 }
 
 .hero-title {
-  font-size: clamp(34px, 5vw, 56px);
+  font-size: clamp(50px, 15vw, 70px);
   font-weight: 800;
   line-height: 1.1;
   letter-spacing: -0.03em;
