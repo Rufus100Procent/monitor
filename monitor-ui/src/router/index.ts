@@ -59,11 +59,6 @@ const router = createRouter({
           component: () => import('../views/server/BasicsView.vue'),
         },
         {
-          path: 'track-me',
-          meta: { title: 'Track Me', requiresAuth: true },
-          component: () => import('../views/server/TrackMeView.vue'),
-        },
-        {
           path: 'settings',
           meta: { title: 'Settings', requiresAuth: true },
           component: () => import('../views/server/SettingsView.vue'),

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { LayoutDashboard, HelpCircle, UserRound, Info, SatelliteDish, Settings } from 'lucide-vue-next'
+import { LayoutDashboard, HelpCircle, UserRound, Info, Settings } from 'lucide-vue-next'
 import { useSidebar } from '../composables/useSidebar'
 import { useServers } from '../composables/useServers'
 
@@ -66,10 +66,6 @@ watch(activeServerId, (id) => {
                 <RouterLink :to="`/server/${server.id}/basics`" class="nav-item sub" activeClass="active">
                   <Info :size="15" />
                   <span>Basics</span>
-                </RouterLink>
-                <RouterLink :to="`/server/${server.id}/track-me`" class="nav-item sub" activeClass="active">
-                  <SatelliteDish :size="15" />
-                  <span>Track Me</span>
                 </RouterLink>
                 <RouterLink :to="`/server/${server.id}/settings`" class="nav-item sub" activeClass="active">
                   <Settings :size="15" />
@@ -156,9 +152,9 @@ hr {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 9px;
+  padding: 9px 12px;
   border-radius: 8px;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 500;
   color: var(--text-secondary);
   transition: background 0.12s, color 0.12s;
@@ -191,8 +187,8 @@ hr {
 
 /* Sub nav items indented */
 .nav-item.sub {
-  padding-left: 22px;
-  font-size: 12px;
+  padding: 8px 12px 8px 26px;
+  font-size: 13px;
 }
 
 .nav-sep {
@@ -226,7 +222,7 @@ hr {
   gap: 7px;
   padding: 6px 9px;
   border-radius: 8px;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 500;
   color: var(--text-secondary);
   transition: background 0.12s, color 0.12s;
@@ -257,7 +253,7 @@ hr {
 }
 
 .i-arrow {
-  font-size: 0.52rem;
+  font-size: 0.90rem;
   color: var(--text-muted);
   transition: transform 0.25s ease, color 0.15s;
   flex-shrink: 0;
