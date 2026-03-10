@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS server_register (
     last_seen_up TIMESTAMP WITH TIME ZONE,
     memory_max_bytes BIGINT,
     cpu_core_count INT,
-    CONSTRAINT chk_poll_interval CHECK (poll_interval_seconds >= 7 AND poll_interval_seconds <= 60),
+    CONSTRAINT chk_poll_interval CHECK (poll_interval_seconds >= 4 AND poll_interval_seconds <= 60),
     CONSTRAINT uq_base_url_actuator_path UNIQUE (base_url, actuator_path)
     );
 
