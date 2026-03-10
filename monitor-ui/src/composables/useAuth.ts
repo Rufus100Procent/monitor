@@ -8,6 +8,8 @@ export interface JwtPayload {
   exp: number
   userId: string
   iat: number
+  createdAt: string
+  role: string
   scope: string[]
 }
 
@@ -39,7 +41,7 @@ function setToken(accessToken: string) {
 
 function clearToken() {
   token.value = null
-  localStorage.removeItem(TOKEN_KEY)
+  localStorage.clear()
 }
 
 function isTokenExpired(): boolean {

@@ -1,14 +1,25 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useAuth } from '../composables/useAuth'
+import { useDisplayTimezone } from '../composables/useDisplayTimezone'
 import { useRouter } from 'vue-router'
 
 const { tokenPayload, clearToken } = useAuth()
+const { selectedIana } = useDisplayTimezone()
 const router = useRouter()
 
-function formatDate(ts: number | undefined): string {
-  if (!ts) return '—'
-  return new Date(ts * 1000).toLocaleString()
+function formatDate(date: string | number | undefined): string {
+  if (!date) return '—'
+  const d = typeof date === 'number' ? new Date(date * 1000) : new Date(date)
+  return d.toLocaleString('en-GB', {
+    timeZone: selectedIana.value,
+    year: 'numeric', month: 'short', day: 'numeric',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+  })
 }
+
+const createdAt = computed(() => formatDate(tokenPayload.value?.createdAt))
+const expiresAt = computed(() => formatDate(tokenPayload.value?.exp))
 
 function logout() {
   clearToken()
@@ -31,15 +42,15 @@ function logout() {
         </div>
         <div class="row">
           <span class="label">Role</span>
-          <span class="value">{{ tokenPayload?.scope?.join(', ') ?? '—' }}</span>
+          <span class="value">{{ tokenPayload?.role ?? '—' }}</span>
         </div>
         <div class="row">
-          <span class="label">Issued at</span>
-          <span class="value">{{ formatDate(tokenPayload?.iat) }}</span>
+          <span class="label">Created at</span>
+          <span class="value">{{ createdAt }}</span>
         </div>
         <div class="row">
           <span class="label">Session expires</span>
-          <span class="value">{{ formatDate(tokenPayload?.exp) }}</span>
+          <span class="value">{{ expiresAt }}</span>
         </div>
       </div>
     </div>
