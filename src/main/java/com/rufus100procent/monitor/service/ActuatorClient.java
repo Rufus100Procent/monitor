@@ -36,7 +36,7 @@ public class ActuatorClient {
     public Mono<HealthResult> fetchHealth(String baseUrl, String actuatorPath) {
         return get(baseUrl + actuatorPath + "/health")
                 .map(json -> {
-                    String status = json.path("status").asText("UNKNOWN");
+                    String status = json.path("status").asString("UNKNOWN");
                     long diskTotal = json.path("components").path("diskSpace")
                             .path("details").path("total").asLong(0L);
                     long diskFree = json.path("components").path("diskSpace")
@@ -48,7 +48,7 @@ public class ActuatorClient {
 
     public Mono<String> fetchAppVersion(String baseUrl, String actuatorPath) {
         return get(baseUrl + actuatorPath + "/info")
-                .map(json -> json.path("build").path("version").asText("unknown"))
+                .map(json -> json.path("build").path("version").asString("unknown"))
                 .onErrorReturn("unknown");
     }
 
@@ -81,7 +81,7 @@ public class ActuatorClient {
 
     private double extractStatistic(JsonNode json, String statistic) {
         for (JsonNode measurement : json.path("measurements")) {
-            if (statistic.equalsIgnoreCase(measurement.path("statistic").asText())) {
+            if (statistic.equalsIgnoreCase(measurement.path("statistic").asString())) {
                 return measurement.path("value").asDouble(0.0);
             }
         }

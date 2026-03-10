@@ -148,7 +148,8 @@ function applyFilter(key: RangeKey) {
   if (key === 'custom') { showCustom.value = true; return }
 
   const to     = new Date()
-  const msBack = key === '1h' ? 3_600_000 : key === '7d' ? 7 * 86_400_000 : 30 * 86_400_000
+  const msByKey: Record<string, number> = { '1h': 3_600_000, '7d': 7 * 86_400_000 }
+  const msBack = msByKey[key] ?? 30 * 86_400_000
   const from   = new Date(to.getTime() - msBack)
   loadHistorical(from, to)
 }
@@ -217,7 +218,9 @@ const stats = computed(() => {
 
 const gcClass = computed(() => {
   const p = stats.value?.gcPct ?? 0
-  return p > 5 ? 'val-danger' : p > 2 ? 'val-warning' : 'val-good'
+  if (p > 5) return 'val-danger'
+  if (p > 2) return 'val-warning'
+  return 'val-good'
 })
 
 //  Custom date picker helpers

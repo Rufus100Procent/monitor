@@ -75,7 +75,7 @@ async function submit() {
   <Teleport to="body">
     <Transition name="modal">
       <div v-if="modelValue" class="modal-backdrop" @click.self="close">
-        <div class="modal" role="dialog" aria-modal="true">
+        <dialog class="modal" aria-modal="true" open>
 
           <div class="modal-head">
             <span class="modal-title">Register Server</span>
@@ -87,28 +87,28 @@ async function submit() {
           <form class="modal-form" @submit.prevent="submit">
 
             <div class="field">
-              <label>App Name</label>
-              <input v-model="form.appName" type="text" placeholder="Music Service" required />
+              <label for="reg-appName">App Name</label>
+              <input id="reg-appName" v-model="form.appName" type="text" placeholder="Music Service" required />
             </div>
 
             <div class="field">
-              <label>App Version</label>
-              <input v-model="form.appVersion" type="text" placeholder="1.0.0" required />
+              <label for="reg-appVersion">App Version</label>
+              <input id="reg-appVersion" v-model="form.appVersion" type="text" placeholder="1.0.0" required />
             </div>
 
             <div class="field">
-              <label>Base URL</label>
-              <input v-model="form.baseUrl" type="text" placeholder="http://localhost:8082" required />
+              <label for="reg-baseUrl">Base URL</label>
+              <input id="reg-baseUrl" v-model="form.baseUrl" type="text" placeholder="http://localhost:8082" required />
             </div>
 
             <div class="field">
-              <label>Actuator Path</label>
-              <input v-model="form.actuatorPath" type="text" placeholder="/actuator" required />
+              <label for="reg-actuatorPath">Actuator Path</label>
+              <input id="reg-actuatorPath" v-model="form.actuatorPath" type="text" placeholder="/actuator" required />
             </div>
 
             <div class="field">
-              <label>Poll Interval (seconds)</label>
-              <input v-model.number="form.pollIntervalSeconds" type="number" min="1" required />
+              <label for="reg-pollInterval">Poll Interval (seconds)</label>
+              <input id="reg-pollInterval" v-model.number="form.pollIntervalSeconds" type="number" min="1" required />
             </div>
 
             <div v-if="submitError" class="submit-error">{{ submitError }}</div>
@@ -122,7 +122,7 @@ async function submit() {
             </div>
 
           </form>
-        </div>
+        </dialog>
       </div>
     </Transition>
   </Teleport>

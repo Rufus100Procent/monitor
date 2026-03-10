@@ -48,7 +48,7 @@ const chartCtx = computed(() => {
 function dataset(getValue: (s: Snapshot) => number | null): (number | null)[] {
   return props.snapshots.map(s => {
     const v = getValue(s)
-    return v == null ? null : parseFloat(v.toFixed(4))
+    return v == null ? null : Number.parseFloat(v.toFixed(4))
   })
 }
 

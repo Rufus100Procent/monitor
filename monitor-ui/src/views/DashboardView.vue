@@ -214,7 +214,7 @@ const showModal = ref(false)
 .status-badge.up   { background: hsl(142,60%,92%); color: hsl(142,65%,30%); }
 .status-badge.down { background: hsl(0,65%,93%);   color: hsl(0,65%,40%); }
 :root.dark .status-badge.up   { background: hsl(142,40%,16%); color: hsl(142,60%,60%); }
-:root.dark .status-badge.down { background: hsl(0,40%,18%);   color: hsl(0,60%,62%); }
+:root.dark .status-badge.down { background: hsl(0,40%,18%);   color: hsl(0,70%,75%); }
 
 .app-version { font-size: 12px; color: var(--text-muted); margin-top: -6px; }
 

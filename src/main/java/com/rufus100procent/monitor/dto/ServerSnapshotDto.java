@@ -3,6 +3,7 @@ package com.rufus100procent.monitor.dto;
 import java.time.Instant;
 import java.util.UUID;
 
+@SuppressWarnings("unused")
 public class ServerSnapshotDto {
 
     private UUID id;

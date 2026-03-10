@@ -217,7 +217,7 @@ const METRICS = [
   font-size: 16px;
   font-weight: 700;
   color: hsl(0, 0%, 100%);
-  background: hsl(162, 60%, 38%);
+  background: hsl(162, 65%, 28%);
   transition: opacity 0.15s;
   letter-spacing: 0.03em;
 }

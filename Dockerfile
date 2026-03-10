@@ -9,6 +9,5 @@ RUN mvn package -DskipTests
 # Stage 2: Package the application in a runtime image
 FROM amazoncorretto:25-alpine
 WORKDIR /app/myapp
-ENV SPRING_PROFILES_ACTIVE=staging
 COPY --from=build /app/myapp/target/ROOT.jar app.jar
 ENTRYPOINT ["java", "-jar", "app.jar"]

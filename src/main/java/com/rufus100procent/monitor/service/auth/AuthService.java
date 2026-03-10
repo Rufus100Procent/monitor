@@ -42,14 +42,13 @@ public class AuthService {
 
     public Mono<String> register(RegisterRequest request) {
         return userRepository.existsByUsername(request.getUsername())
-                .flatMap(exists -> {
-                    if (exists) {
-                        log.warn("Registration failed: username '{}' already exists", request.getUsername());
-                        return Mono.error(new IllegalArgumentException(
-                                "Username '" + request.getUsername() + "' is already taken"
-                        ));
-                    }
-
+                .filter(exists -> !exists)
+                .switchIfEmpty(Mono.error(new IllegalArgumentException(
+                        "Username '" + request.getUsername() + "' is already taken"
+                )))
+                .doOnDiscard(Boolean.class, _ -> log.warn(
+                        "Registration failed: username '{}' already exists", request.getUsername()))
+                .flatMap(_ -> {
                     MonitorUser user = new MonitorUser();
                     user.setId(UUID.randomUUID());
                     user.setIsNew(true);

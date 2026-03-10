@@ -109,22 +109,22 @@ async function confirmDelete() {
 
         <div class="fields">
           <div class="field">
-            <label>App Name</label>
-            <input v-model="form.appName" type="text" />
+            <label for="cfg-appName">App Name</label>
+            <input id="cfg-appName" v-model="form.appName" type="text" />
           </div>
 
           <div class="field">
-            <label>App Version</label>
-            <input v-model="form.appVersion" type="text" placeholder="e.g. 1.0.0" />
+            <label for="cfg-appVersion">App Version</label>
+            <input id="cfg-appVersion" v-model="form.appVersion" type="text" placeholder="e.g. 1.0.0" />
           </div>
 
           <div class="field">
-            <label>Poll Interval (seconds)</label>
-            <input v-model.number="form.pollIntervalSeconds" type="number" min="1" />
+            <label for="cfg-pollInterval">Poll Interval (seconds)</label>
+            <input id="cfg-pollInterval" v-model.number="form.pollIntervalSeconds" type="number" min="1" />
           </div>
 
           <div class="field">
-            <label>Polling</label>
+            <span class="field-label">Polling</span>
             <label class="toggle">
               <input type="checkbox" v-model="form.pause" class="toggle-input" />
               <span class="toggle-track">
@@ -239,7 +239,8 @@ async function confirmDelete() {
   gap: 5px;
 }
 
-.field label:first-child {
+.field label:first-child,
+.field-label {
   font-size: 12px;
   font-weight: 600;
   color: var(--text-secondary);

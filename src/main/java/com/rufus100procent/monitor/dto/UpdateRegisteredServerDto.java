@@ -2,6 +2,7 @@ package com.rufus100procent.monitor.dto;
 
 import java.util.UUID;
 
+@SuppressWarnings("unused")
 public class UpdateRegisteredServerDto {
 
     private UUID id;

@@ -55,9 +55,6 @@ public class ServerSnapShotController {
 # latest snapshot
 GET /api/v0/snapshot/{serverId}/latest
 
-# page 0, size 50 newest first (default)
-GET /api/v0/snapshot/{serverId}
-
 # page 0, size 100 newest first
 GET /api/v0/snapshot/{serverId}?size=100
 

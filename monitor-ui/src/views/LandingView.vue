@@ -284,7 +284,7 @@ const METRICS = [
   font-size: 13px;
   font-weight: 700;
   color: hsl(0, 0%, 100%);
-  background: hsl(162, 60%, 38%);
+  background: hsl(162, 65%, 28%);
   transition: opacity 0.15s;
 }
 
@@ -525,7 +525,7 @@ const METRICS = [
   font-size: 14px;
   font-weight: 700;
   color: hsl(0, 0%, 100%);
-  background: hsl(162, 60%, 38%);
+  background: hsl(162, 65%, 28%);
   transition: opacity 0.15s;
 }
 
@@ -534,7 +534,7 @@ const METRICS = [
 
 .auth-error {
   font-size: 13px;
-  color: hsl(0, 65%, 52%);
+  color: hsl(0, 70%, 38%);
   background: hsl(0, 80%, 97%);
   border: 1px solid hsl(0, 65%, 88%);
   border-radius: 8px;

@@ -27,7 +27,7 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
   const token = getValidToken()
 
   if (!token) {
-    window.location.href = '/'
+    globalThis.location.href = '/'
     throw new Error('Session expired')
   }
 
@@ -45,7 +45,7 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
   if (!res.ok) {
     if (res.status === 401) {
       localStorage.removeItem(TOKEN_KEY)
-      window.location.href = '/'
+      globalThis.location.href = '/'
       throw new Error('Unauthorized')
     }
     const err: ApiErrorResponse = await res.json()

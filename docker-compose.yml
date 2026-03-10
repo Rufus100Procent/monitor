@@ -1,7 +1,7 @@
 version: "3.8"
 
 services:
-  postgres:
+  monitor-database:
     image: postgres:17-alpine
     environment:
       POSTGRES_DB: monitor_server
@@ -10,4 +10,36 @@ services:
     ports:
       - "5439:5432"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d monitor_server"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
+  monitor-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: stage
+      DB_USERNAME: admin
+      DB_PASSWORD: passw
+      JWT_SECRET: "SKUcmszDtfBnFHKTe4/jnUotQqeIID0iokG8tzLcjMs="
+    ports:
+      - "8073:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      monitor-database:
+        condition: service_healthy
+    restart: unless-stopped
+
+  monitor-ui:
+    build:
+      context: ./monitor-ui
+      dockerfile: Dockerfile
+    ports:
+      - "8173:8173"
+    depends_on:
+      - monitor-backend
+    restart: unless-stopped

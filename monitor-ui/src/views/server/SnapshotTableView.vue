@@ -19,7 +19,7 @@ const props = withDefaults(defineProps<{
 })
 
 const emit = defineEmits<{
-  (e: 'page-change', page: number): void
+  'page-change': [page: number]
 }>()
 
 const { selectedIana } = useDisplayTimezone()

@@ -14,7 +14,7 @@ COPY public ./public
 RUN bun run build
 
 # Stage 2: Serve
-FROM nginx:alpine
+FROM nginxinc/nginx-unprivileged:alpine
 COPY --from=build /app/dist /usr/share/nginx/html
 RUN printf 'server {\n\
     listen 8173;\n\

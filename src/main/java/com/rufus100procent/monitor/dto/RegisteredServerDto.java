@@ -3,13 +3,14 @@ package com.rufus100procent.monitor.dto;
 import java.time.Instant;
 import java.util.UUID;
 
+@SuppressWarnings("unused")
 public class RegisteredServerDto {
 
     private UUID id;
 
     private String appName;
     private String appVersion;
-    private String ServerActuatorUrl; // base + actuator path
+    private String serverActuatorUrl; // base + actuator path
     private int pollIntervalSeconds;
 
     private boolean pause;
@@ -37,11 +38,11 @@ public class RegisteredServerDto {
     }
 
     public String getServerActuatorUrl() {
-        return ServerActuatorUrl;
+        return serverActuatorUrl;
     }
 
     public void setServerActuatorUrl(String serverActuatorUrl) {
-        ServerActuatorUrl = serverActuatorUrl;
+        this.serverActuatorUrl = serverActuatorUrl;
     }
 
     public int getPollIntervalSeconds() {

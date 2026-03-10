@@ -1,5 +1,6 @@
 package com.rufus100procent.monitor.dto;
 
+@SuppressWarnings("unused")
 public class ServerDto {
     private String appName;
     private String appVersion;
