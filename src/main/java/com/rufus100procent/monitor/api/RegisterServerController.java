@@ -20,7 +20,6 @@ import static com.rufus100procent.monitor.utils.JwtUtil.extractUserId;
 
 @RestController
 @RequestMapping("/api/v0/server")
-@CrossOrigin(origins = "http://localhost:5173")
 public class RegisterServerController {
 
     private final ServerRegisterService registerService;

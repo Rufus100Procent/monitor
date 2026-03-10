@@ -16,7 +16,6 @@ import static com.rufus100procent.monitor.utils.JwtUtil.extractUserId;
 
 @RestController
 @RequestMapping("/api/v0/snapshot")
-@CrossOrigin(origins = "http://localhost:5173")
 public class ServerSnapShotController {
 
     private final ServerSnapshotService snapshotService;
