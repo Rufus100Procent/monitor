@@ -1,5 +1,8 @@
 import { apiFetch } from './client'
 
+const BASE_URL = 'http://localhost:8080'
+const TOKEN_KEY = 'access_token'
+
 export interface Server {
   id: string
   appName: string
@@ -104,4 +107,28 @@ export function getSnapshots(serverId: string, params?: SnapshotQueryParams): Pr
 
 export function getLatestSnapshot(serverId: string): Promise<Snapshot> {
   return apiFetch<Snapshot>(`/api/v0/snapshot/${serverId}/latest`)
+}
+
+export async function getSnapshotSize(serverId: string): Promise<string> {
+  const token = localStorage.getItem(TOKEN_KEY)
+  const res = await fetch(`${BASE_URL}/api/v0/snapshot/${serverId}/size`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) throw new Error('Failed to fetch snapshot size')
+  return res.text()
+}
+
+export async function exportSnapshotsCsv(serverId: string): Promise<void> {
+  const token = localStorage.getItem(TOKEN_KEY)
+  const res = await fetch(`${BASE_URL}/api/v0/snapshot/${serverId}/export`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) throw new Error('Export failed')
+  const blob = await res.blob()
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `snapshots-${serverId}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
 }

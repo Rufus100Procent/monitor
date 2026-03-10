@@ -2,11 +2,14 @@ package com.rufus100procent.monitor.api;
 
 import com.rufus100procent.monitor.service.ServerSnapshotService;
 import com.rufus100procent.monitor.utils.ApiError;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Instant;
@@ -49,6 +52,35 @@ public class ServerSnapShotController {
                 .map(dto -> ResponseEntity.ok((Object) dto))
                 .onErrorResume(ex -> ApiError.error(ex, HttpStatus.NOT_FOUND));
     }
+
+    @GetMapping("/{serverId}/size")
+    public Mono<ResponseEntity<Object>> getTableSize(
+            @PathVariable UUID serverId,
+            @AuthenticationPrincipal Jwt jwt) {
+
+        UUID userId = extractUserId(jwt);
+        return snapshotService.getTableSize(serverId, userId)
+                .map(size -> ResponseEntity.ok((Object) size))
+                .onErrorResume(ex -> ApiError.error(ex, HttpStatus.NOT_FOUND));
+    }
+
+    @GetMapping("/{serverId}/export")
+    public Mono<ResponseEntity<Flux<String>>> exportCsv(
+            @PathVariable UUID serverId,
+            @AuthenticationPrincipal Jwt jwt) {
+
+        UUID userId = extractUserId(jwt);
+        Flux<String> csvStream = snapshotService.exportSnapshotsCsv(serverId, userId)
+                .map(row -> row + "\n");
+
+        return Mono.just(ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"snapshots-" + serverId + ".csv\"")
+                .contentType(MediaType.parseMediaType("text/csv"))
+                .body(csvStream));
+    }
+
+
 }
 
 /*

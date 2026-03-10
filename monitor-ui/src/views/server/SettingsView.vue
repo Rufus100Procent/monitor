@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { LoaderCircle } from 'lucide-vue-next'
-import { updateServer, deleteServer } from '../../api/servers'
+import { LoaderCircle, Download } from 'lucide-vue-next'
+import { updateServer, deleteServer, getSnapshotSize, exportSnapshotsCsv } from '../../api/servers'
 import { useServers } from '../../composables/useServers'
 
 const route = useRoute()
@@ -12,7 +12,10 @@ const { servers, ensureLoaded, updateServerInList, removeServer } = useServers()
 const serverId = computed(() => route.params.id as string)
 const server = computed(() => servers.value.find(s => s.id === serverId.value))
 
-onMounted(ensureLoaded)
+onMounted(() => {
+  ensureLoaded()
+  loadSnapshotSize()
+})
 
 // Form state
 const form = ref({
@@ -61,6 +64,35 @@ async function confirmUpdate() {
     updateError.value = e instanceof Error ? e.message : 'Update failed.'
   } finally {
     updating.value = false
+  }
+}
+
+// ── Snapshot data
+const snapshotSize = ref<string | null>(null)
+const loadingSize  = ref(false)
+const exporting    = ref(false)
+const exportError  = ref('')
+
+async function loadSnapshotSize() {
+  loadingSize.value = true
+  try {
+    snapshotSize.value = await getSnapshotSize(serverId.value)
+  } catch {
+    snapshotSize.value = null
+  } finally {
+    loadingSize.value = false
+  }
+}
+
+async function doExport() {
+  exporting.value = true
+  exportError.value = ''
+  try {
+    await exportSnapshotsCsv(serverId.value)
+  } catch (e) {
+    exportError.value = e instanceof Error ? e.message : 'Export failed.'
+  } finally {
+    exporting.value = false
   }
 }
 
@@ -147,7 +179,28 @@ async function confirmDelete() {
         </button>
       </div>
 
-      <!-- Div 3: Delete -->
+      <!-- Div 3: Snapshot Data -->
+      <div class="settings-section">
+        <h2 class="section-title">Snapshot Data</h2>
+
+        <div class="data-row">
+          <span class="data-label">Total Size</span>
+          <span class="data-value">
+            <LoaderCircle v-if="loadingSize" :size="13" class="spin" />
+            <span v-else>{{ snapshotSize ?? '—' }}</span>
+          </span>
+        </div>
+
+        <div v-if="exportError" class="inline-error">{{ exportError }}</div>
+
+        <button class="btn-export" :disabled="exporting" @click="doExport">
+          <Download v-if="!exporting" :size="14" />
+          <LoaderCircle v-else :size="14" class="spin" />
+          {{ exporting ? 'Exporting…' : 'Export CSV' }}
+        </button>
+      </div>
+
+      <!-- Div 4: Delete -->
       <div class="settings-section danger-section">
         <h2 class="section-title danger-title">Danger Zone</h2>
         <p class="danger-desc">
@@ -354,6 +407,53 @@ async function confirmDelete() {
   background: hsl(0, 40%, 14%);
   border-color: hsl(0, 40%, 24%);
   color: hsl(0, 65%, 65%);
+}
+
+/* Snapshot data row */
+.data-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.data-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.data-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Export button */
+.btn-export {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  transition: border-color 0.15s, background 0.15s;
+  align-self: flex-start;
+}
+
+.btn-export:not(:disabled):hover {
+  border-color: var(--accent);
+  background: var(--surface-hover, var(--bg));
+}
+
+.btn-export:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* Danger section */

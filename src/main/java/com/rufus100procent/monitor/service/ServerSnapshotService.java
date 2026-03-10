@@ -8,11 +8,13 @@ import com.rufus100procent.monitor.repo.ServerSnapshotRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+
 
 @Service
 public class ServerSnapshotService {
@@ -52,7 +54,7 @@ public class ServerSnapshotService {
 
         return serverRegisterRepository.findByIdAndUserId(serverId, userId)
                 .switchIfEmpty(Mono.error(new IllegalArgumentException(
-                        "Server not found with id: " + serverId)))
+                        " Server not found with id: " + serverId)))
                 .flatMap(_ -> Mono.zip(
                         snapshotRepository.findSnapshots(serverId, resolvedFrom, resolvedTo, resolvedSize, offset)
                                 .map(this::toDto)
@@ -78,11 +80,59 @@ public class ServerSnapshotService {
     public Mono<ServerSnapshotDto> getLatest(UUID serverId, UUID userId) {
         return serverRegisterRepository.findByIdAndUserId(serverId, userId)
                 .switchIfEmpty(Mono.error(new IllegalArgumentException(
-                        "Server not found with id: " + serverId)))
+                        "Server  not found with id: " + serverId)))
                 .flatMap(_ -> snapshotRepository.findTopByServerIdOrderByPolledAtDesc(serverId))
                 .switchIfEmpty(Mono.error(new IllegalArgumentException(
                         "No snapshots found for server: " + serverId)))
                 .map(this::toDto);
+    }
+
+    public Flux<String> exportSnapshotsCsv(UUID serverId, UUID userId) {
+        return serverRegisterRepository.findByIdAndUserId(serverId, userId)
+                .switchIfEmpty(Mono.error(new IllegalArgumentException(
+                        "Server not found with id: " + serverId)))
+                .flatMapMany(_ -> snapshotRepository.findAllByServerIdOrderByPolledAtDesc(serverId))
+                .map(this::toCsvRow)
+                .startWith(CSV_HEADER);
+    }
+
+
+    private static final String CSV_HEADER =
+            "id,server_id,polled_at,health_status,memory_used_bytes,cpu_usage," +
+                    "system_load,uptime_seconds,jvm_threads_live,gc_overhead," +
+                    "disk_total_bytes,disk_free_bytes,http_request_count,http_avg_ms," +
+                    "http_2xx_count,http_3xx_count,http_4xx_count,http_5xx_count,poll_success";
+
+    private String toCsvRow(ServerSnapshot s) {
+        return String.join(",",
+                str(s.getId()),
+                str(s.getServerId()),
+                str(s.getPolledAt()),
+                str(s.getHealthStatus()),
+                str(s.getMemoryUsedBytes()),
+                str(s.getCpuUsage()),
+                str(s.getSystemLoad()),
+                str(s.getUptimeSeconds()),
+                str(s.getJvmThreadsLive()),
+                str(s.getGcOverhead()),
+                str(s.getDiskTotalBytes()),
+                str(s.getDiskFreeBytes()),
+                str(s.getHttpRequestCount()),
+                str(s.getHttpAvgMs()),
+                str(s.getHttp2xxCount()),
+                str(s.getHttp3xxCount()),
+                str(s.getHttp4xxCount()),
+                str(s.getHttp5xxCount()),
+                str(s.isPollSuccess())
+        );
+    }
+
+    public Mono<String> getTableSize(UUID serverId, UUID userId) {
+        return serverRegisterRepository.findByIdAndUserId(serverId, userId)
+                .switchIfEmpty(Mono.error(new IllegalArgumentException(
+                        "Server not found with id: " + serverId)))
+                .flatMap(_ -> snapshotRepository.getTableSizeBytes())
+                .map(this::formatBytes);
     }
 
     public Mono<ServerSnapshot> saveSnapshot(ServerSnapshot snapshot) {
@@ -123,6 +173,10 @@ public class ServerSnapshotService {
                         server.getAppName(), e.getMessage()));
     }
 
+    public Mono<ServerSnapshot> findLatestRaw(UUID serverId) {
+        return snapshotRepository.findTopByServerIdOrderByPolledAtDesc(serverId);
+    }
+
     private ServerSnapshotDto toDto(ServerSnapshot snapshot) {
         ServerSnapshotDto dto = new ServerSnapshotDto();
         dto.setId(snapshot.getId());
@@ -146,7 +200,14 @@ public class ServerSnapshotService {
         dto.setPollSuccess(snapshot.isPollSuccess());
         return dto;
     }
-    public Mono<ServerSnapshot> findLatestRaw(UUID serverId) {
-        return snapshotRepository.findTopByServerIdOrderByPolledAtDesc(serverId);
+    private String formatBytes(long bytes) {
+        if (bytes < 1024) return bytes + " B";
+        if (bytes < 1024 * 1024) return String.format("%.1f KB", bytes / 1024.0);
+        if (bytes < 1024L * 1024 * 1024) return String.format("%.1f MB", bytes / (1024.0 * 1024));
+        return String.format("%.2f GB", bytes / (1024.0 * 1024 * 1024));
+    }
+
+    private String str(Object val) {
+        return val == null ? "" : val.toString();
     }
 }
