@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { LayoutDashboard, HelpCircle, UserRound, Info, SatelliteDish, Settings,
-  BookOpen } from 'lucide-vue-next'
+import { LayoutDashboard, HelpCircle, UserRound, Info, SatelliteDish, Settings } from 'lucide-vue-next'
 import { useSidebar } from '../composables/useSidebar'
 import { useServers } from '../composables/useServers'
 
@@ -84,10 +83,6 @@ watch(activeServerId, (id) => {
     </div>
 
     <div class="sidebar-bottom">
-      <RouterLink to="/about" class="nav-item" activeClass="active">
-        <BookOpen :size="17" />
-        <span>About</span>
-      </RouterLink>
       <RouterLink to="/faq" class="nav-item" activeClass="active">
         <HelpCircle :size="17" />
         <span>FAQ</span>
