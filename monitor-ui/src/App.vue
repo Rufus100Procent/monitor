@@ -3,13 +3,19 @@ import { useRoute, RouterView } from 'vue-router'
 import AppSidebar from './components/AppSidebar.vue'
 import AppTopBar from './components/AppTopBar.vue'
 import { useSidebar } from './composables/useSidebar'
+import { useAuth } from './composables/useAuth'
 
 const route = useRoute()
 const { open: sidebarOpen, close: closeSidebar } = useSidebar()
+const { isAuthenticated } = useAuth()
 </script>
 
 <template>
-  <div class="layout">
+  <!-- Unauthenticated or full-page routes (docs, landing, auth) -->
+  <RouterView v-if="!isAuthenticated || route.meta.fullPage" />
+
+  <!-- Authenticated: full app layout -->
+  <div v-else class="layout">
     <div class="backdrop" :class="{ visible: sidebarOpen }" @click="closeSidebar" />
     <AppSidebar />
 
@@ -72,26 +78,6 @@ const { open: sidebarOpen, close: closeSidebar } = useSidebar()
   flex: 1;
   overflow-y: auto;
   padding: 24px;
-}
-
-.loader {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  height: 200px;
-  color: var(--text-muted);
-  font-size: 13px;
-}
-
-.spin {
-  animation: spin 1s linear infinite;
-  color: var(--accent);
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
 }
 
 .backdrop {
