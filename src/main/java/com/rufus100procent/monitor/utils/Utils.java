@@ -1,8 +1,8 @@
 package com.rufus100procent.monitor.utils;
 
-public final class StorageUtils {
+public final class Utils {
 
-    private StorageUtils() {}
+    private Utils() {}
 
     public static String formatBytes(long bytes) {
         if (bytes < 1024) return bytes + " B";
@@ -10,4 +10,5 @@ public final class StorageUtils {
         if (bytes < 1024L * 1024 * 1024) return String.format("%.1f MB", bytes / (1024.0 * 1024));
         return String.format("%.2f GB", bytes / (1024.0 * 1024 * 1024));
     }
+
 }

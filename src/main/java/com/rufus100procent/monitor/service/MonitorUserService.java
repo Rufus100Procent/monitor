@@ -3,7 +3,7 @@ package com.rufus100procent.monitor.service;
 import com.rufus100procent.monitor.modal.MonitorUser;
 import com.rufus100procent.monitor.repo.ServerSnapshotRepository;
 import com.rufus100procent.monitor.repo.UserRepository;
-import com.rufus100procent.monitor.utils.StorageUtils;
+import com.rufus100procent.monitor.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -47,7 +47,7 @@ public class MonitorUserService {
     public Mono<String> getTotalSnapshotSize(UUID userId) {
         return findUserById(userId)
                 .flatMap(_ -> snapshotRepository.getSnapshotSizeBytesByUserId(userId))
-                .map(StorageUtils::formatBytes);
+                .map(Utils::formatBytes);
     }
 
     private Mono<MonitorUser> findUserById(UUID userId) {

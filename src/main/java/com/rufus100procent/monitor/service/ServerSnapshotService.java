@@ -5,7 +5,7 @@ import com.rufus100procent.monitor.modal.ServerRegister;
 import com.rufus100procent.monitor.modal.ServerSnapshot;
 import com.rufus100procent.monitor.repo.ServerRegisterRepository;
 import com.rufus100procent.monitor.repo.ServerSnapshotRepository;
-import com.rufus100procent.monitor.utils.StorageUtils;
+import com.rufus100procent.monitor.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -132,7 +132,7 @@ public class ServerSnapshotService {
                 .switchIfEmpty(Mono.error(new IllegalArgumentException(
                         "Server not found with id: " + serverId)))
                 .flatMap(_ -> snapshotRepository.getSnapshotSizeBytesByServerId(serverId))
-                .map(StorageUtils::formatBytes);
+                .map(Utils::formatBytes);
     }
 
     public Mono<ServerSnapshot> saveSnapshot(ServerSnapshot snapshot) {
