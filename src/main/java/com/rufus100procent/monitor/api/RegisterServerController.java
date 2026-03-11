@@ -70,15 +70,4 @@ public class RegisterServerController {
                 .onErrorResume(ex -> ApiError.error(ex, HttpStatus.NOT_FOUND));
     }
 
-    @PutMapping("/{id}/secret")
-    public Mono<ResponseEntity<Object>> regenerateSecret(
-            @PathVariable UUID id,
-            @AuthenticationPrincipal Jwt jwt) {
-
-        UUID userId = extractUserId(jwt);
-        return registerService.regenerateSecret(id, userId)
-                .map(secret -> ResponseEntity.ok((Object) secret))
-                .onErrorResume(ex -> ApiError.error(ex, HttpStatus.NOT_FOUND));
-    }
-
 }

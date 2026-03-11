@@ -30,7 +30,7 @@ public class ServerRegisterService {
 
 //    /actuator/metrics/jvm.memory.max
 //    /actuator/metrics/system.cpu.count
-    public Mono<String> registerServer(ServerDto data, UUID userId) {
+    public Mono<RegisteredServerDto> registerServer(ServerDto data, UUID userId) {
         return serverRegisterRepository.existsByBaseUrlAndActuatorPath(
                     data.getBaseUrl(), data.getActuatorPath())
             .filter(exists -> !exists)
@@ -44,7 +44,6 @@ public class ServerRegisterService {
                 register.setRegisteredAt(Instant.now());
                 register.setStatus("UP");
                 register.setPause(false);
-                register.setSecret(generateSecret());
                 register.setAppName(data.getAppName());
                 register.setAppVersion(data.getAppVersion());
                 register.setBaseUrl(data.getBaseUrl());
@@ -63,7 +62,7 @@ public class ServerRegisterService {
                                     s.getId(), s.getAppName(), s.getBaseUrl(), s.getActuatorPath(),
                                     s.getMemoryMaxBytes(), s.getCpuCoreCount());
                         })
-                        .map(ServerRegister::getSecret);
+                        .map(this::toDto);
             });
     }
 
@@ -151,10 +150,6 @@ public class ServerRegisterService {
         return serverRegisterRepository.findByIdAndUserId(serverId, userId)
                 .switchIfEmpty(Mono.error(new IllegalArgumentException(
                         "Server not found with id: " + serverId)));
-    }
-
-    private String generateSecret() {
-        return "monitor-v1-" + UUID.randomUUID();
     }
 
     private RegisteredServerDto toDto(ServerRegister register) {

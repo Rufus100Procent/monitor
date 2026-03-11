@@ -24,7 +24,6 @@ public class ServerRegister implements Persistable<UUID> {
     private String appVersion;
     private String baseUrl;
     private String actuatorPath;
-    private String secret;
     private int pollIntervalSeconds;
     private boolean pause;
     private Instant registeredAt;
@@ -83,14 +82,6 @@ public class ServerRegister implements Persistable<UUID> {
 
     public void setActuatorPath(String actuatorPath) {
         this.actuatorPath = actuatorPath;
-    }
-
-    public String getSecret() {
-        return secret;
-    }
-
-    public void setSecret(String secret) {
-        this.secret = secret;
     }
 
     public UUID getUserId() {

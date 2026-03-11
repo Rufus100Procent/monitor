@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS monitor_users (
     username VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     role VARCHAR(50) NOT NULL DEFAULT 'ROLE_ADMIN',
+    secret VARCHAR(255),
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
     last_login_at TIMESTAMP WITH TIME ZONE
     );
@@ -14,7 +15,6 @@ CREATE TABLE IF NOT EXISTS server_register (
     app_version VARCHAR(20) NOT NULL,
     base_url VARCHAR(500) NOT NULL,
     actuator_path VARCHAR(255) NOT NULL,
-    secret VARCHAR(500) NOT NULL,
     poll_interval_seconds INT NOT NULL DEFAULT 15,
     status VARCHAR(50) NOT NULL DEFAULT 'UNKNOWN',
     pause BOOLEAN NOT NULL DEFAULT FALSE,
@@ -24,7 +24,8 @@ CREATE TABLE IF NOT EXISTS server_register (
     memory_max_bytes BIGINT,
     cpu_core_count INT,
     CONSTRAINT chk_poll_interval CHECK (poll_interval_seconds >= 4 AND poll_interval_seconds <= 60),
-    CONSTRAINT uq_base_url_actuator_path UNIQUE (base_url, actuator_path)
+    CONSTRAINT uq_base_url_actuator_path UNIQUE (base_url, actuator_path),
+    CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES monitor_users (id) ON DELETE CASCADE
     );
 
 CREATE TABLE IF NOT EXISTS server_snapshots (

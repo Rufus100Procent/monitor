@@ -1,7 +1,8 @@
 package com.rufus100procent.monitor.modal;
 
 
-import org.jspecify.annotations.Nullable;
+import jakarta.annotation.Nullable;
+import org.jspecify.annotations.NullMarked;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.domain.Persistable;
@@ -18,20 +19,22 @@ import java.util.UUID;
 
 @Table("monitor_users")
 public class MonitorUser implements UserDetails, Serializable, Persistable<UUID> {
+
     @Id
     private UUID id;
 
     @Transient
     private boolean isNew;
+
     private String username;
     private String passwordHash;
     private String role;
+    private String secret;
     private Instant createdAt;
     private Instant lastLoginAt;
 
-
     @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
+    public @NullMarked  Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority(role));
     }
 
@@ -41,7 +44,7 @@ public class MonitorUser implements UserDetails, Serializable, Persistable<UUID>
     }
 
     @Override
-    public String getUsername() {
+    public @NullMarked String getUsername() {
         return username;
     }
 
@@ -57,6 +60,10 @@ public class MonitorUser implements UserDetails, Serializable, Persistable<UUID>
 
     public void setIsNew(boolean isNew) {
         this.isNew = isNew;
+    }
+
+    public void markAsExisting() {
+        this.isNew = false;
     }
 
     public void setUsername(String username) {
@@ -85,6 +92,14 @@ public class MonitorUser implements UserDetails, Serializable, Persistable<UUID>
 
     public Instant getLastLoginAt() {
         return lastLoginAt;
+    }
+
+    public String getSecret() {
+        return secret;
+    }
+
+    public void setSecret(String secret) {
+        this.secret = secret;
     }
 
     public void setId(UUID id) {
