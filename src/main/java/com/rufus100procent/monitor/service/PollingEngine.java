@@ -30,17 +30,19 @@ public class PollingEngine {
     private final ServerSnapshotService serverSnapshotService;
     private final ServerRegisterService serverRegisterService;
     private final ActuatorClient actuatorClient;
+    private final MonitorUserService monitorUserService;
 
     private final Map<UUID, Disposable> activePollers = new ConcurrentHashMap<>();
 
     public PollingEngine(ServerRegisterRepository serverRegisterRepository,
                          ServerSnapshotService serverSnapshotService,
                          ServerRegisterService serverRegisterService,
-                         ActuatorClient actuatorClient) {
+                         ActuatorClient actuatorClient, MonitorUserService monitorUserService) {
         this.serverRegisterRepository = serverRegisterRepository;
         this.serverSnapshotService = serverSnapshotService;
         this.serverRegisterService = serverRegisterService;
         this.actuatorClient = actuatorClient;
+        this.monitorUserService = monitorUserService;
     }
 
     @PostConstruct
@@ -61,16 +63,17 @@ public class PollingEngine {
 
     private Mono<Void> syncWithDatabase() {
         return serverRegisterRepository.findAllByPauseFalse()
+                .flatMap(server -> monitorUserService.resolveUserSecret(server.getUserId())
+                        .map(secret -> {
+                            if (!activePollers.containsKey(server.getId())) {
+                                log.info("Starting poller for server={} interval={}s",
+                                        server.getAppName(), server.getPollIntervalSeconds());
+                                startPolling(server, secret);
+                            }
+                            return server;
+                        }))
                 .collectList()
                 .doOnNext(activeServers -> {
-                    // start new pollers
-                    activeServers.forEach(server -> {
-                        if (!activePollers.containsKey(server.getId())) {
-                            log.info("Starting poller for server={} interval={}s",
-                                    server.getAppName(), server.getPollIntervalSeconds());
-                            startPolling(server);
-                        }
-                    });
                     Set<UUID> activeIds = activeServers.stream()
                             .map(ServerRegister::getId)
                             .collect(Collectors.toSet());
@@ -85,10 +88,10 @@ public class PollingEngine {
                 .then();
     }
 
-    private void startPolling(ServerRegister server) {
+    private void startPolling(ServerRegister server, String secret) {
         stopPolling(server.getId());
         Disposable disposable = Flux.interval(Duration.ZERO, Duration.ofSeconds(server.getPollIntervalSeconds()))
-                .flatMap(_ -> collectMetrics(server)
+                .flatMap(_ -> collectMetrics(server, secret)
                         .flatMap(snapshot -> saveSnapshot(snapshot)
                                 .flatMap(saved -> updateRegister(server, snapshot.getHealthStatus())
                                         .thenReturn(saved)))
@@ -112,26 +115,26 @@ public class PollingEngine {
     }
 
     // metrics in parallel
-    private Mono<ServerSnapshot> collectMetrics(ServerRegister server) {
+    private Mono<ServerSnapshot> collectMetrics(ServerRegister server, String secret) {
         String base = server.getBaseUrl();
         String path = server.getActuatorPath();
 
         return Mono.zip(
-                actuatorClient.fetchHealth(base, path),
-                actuatorClient.fetchAppVersion(base, path),
-                actuatorClient.fetchMetric(base, path, "jvm.memory.used"),
-                actuatorClient.fetchMetric(base, path, "system.cpu.usage"),
-                actuatorClient.fetchMetric(base, path, "system.load.average.1m"),
-                actuatorClient.fetchMetric(base, path, "process.uptime"),
-                actuatorClient.fetchMetric(base, path, "jvm.threads.live")
+                actuatorClient.fetchHealth(base, path, secret),
+                actuatorClient.fetchAppVersion(base, path, secret),
+                actuatorClient.fetchMetric(base, path, "jvm.memory.used", secret),
+                actuatorClient.fetchMetric(base, path, "system.cpu.usage", secret),
+                actuatorClient.fetchMetric(base, path, "system.load.average.1m", secret),
+                actuatorClient.fetchMetric(base, path, "process.uptime", secret),
+                actuatorClient.fetchMetric(base, path, "jvm.threads.live", secret)
         ).flatMap(t -> Mono.zip(
-                actuatorClient.fetchMetric(base, path, "jvm.gc.overhead"),
-                actuatorClient.fetchMetricStatistic(base, path, HTTP_REQUESTS, "COUNT"),
-                actuatorClient.fetchMetricStatistic(base, path, HTTP_REQUESTS, "TOTAL_TIME"),
-                actuatorClient.fetchMetricByOutcome(base, path, HTTP_REQUESTS, "SUCCESS"),
-                actuatorClient.fetchMetricByOutcome(base, path, HTTP_REQUESTS, "REDIRECTION"),
-                actuatorClient.fetchMetricByOutcome(base, path, HTTP_REQUESTS, "CLIENT_ERROR"),
-                actuatorClient.fetchMetricByOutcome(base, path, HTTP_REQUESTS, "SERVER_ERROR")
+                actuatorClient.fetchMetric(base, path, "jvm.gc.overhead", secret),
+                actuatorClient.fetchMetricStatistic(base, path, HTTP_REQUESTS, "COUNT", secret),
+                actuatorClient.fetchMetricStatistic(base, path, HTTP_REQUESTS, "TOTAL_TIME", secret),
+                actuatorClient.fetchMetricByOutcome(base, path, HTTP_REQUESTS, "SUCCESS", secret),
+                actuatorClient.fetchMetricByOutcome(base, path, HTTP_REQUESTS, "REDIRECTION", secret),
+                actuatorClient.fetchMetricByOutcome(base, path, HTTP_REQUESTS, "CLIENT_ERROR", secret),
+                actuatorClient.fetchMetricByOutcome(base, path, HTTP_REQUESTS, "SERVER_ERROR", secret)
         ).flatMap(t2 -> serverSnapshotService.findLatestRaw(server.getId())
                 .map(prev -> buildSnapshot(server, t, t2, prev))
                 .switchIfEmpty(Mono.fromCallable(() -> buildSnapshot(server, t, t2, null)))

@@ -22,48 +22,52 @@ public class ServerRegisterService {
 
     private final ServerRegisterRepository serverRegisterRepository;
     private final ActuatorClient actuatorClient;
+    private final MonitorUserService monitorUserService;
 
-    public ServerRegisterService(ServerRegisterRepository serverRegisterRepository, ActuatorClient actuatorClient) {
+    public ServerRegisterService(ServerRegisterRepository serverRegisterRepository, ActuatorClient actuatorClient, MonitorUserService monitorUserService) {
         this.serverRegisterRepository = serverRegisterRepository;
         this.actuatorClient = actuatorClient;
+        this.monitorUserService = monitorUserService;
     }
 
 //    /actuator/metrics/jvm.memory.max
 //    /actuator/metrics/system.cpu.count
     public Mono<RegisteredServerDto> registerServer(ServerDto data, UUID userId) {
-        return serverRegisterRepository.existsByBaseUrlAndActuatorPath(
-                    data.getBaseUrl(), data.getActuatorPath())
-            .filter(exists -> !exists)
-            .switchIfEmpty(Mono.error(new IllegalStateException(
-                    "Server already registered with url: " + data.getBaseUrl() + data.getActuatorPath())))
-            .flatMap(_ -> validateActuatorUrl(data.getBaseUrl(), data.getActuatorPath()))
-            .flatMap(tuple -> {
-                ServerRegister register = new ServerRegister();
-                register.setId(UUID.randomUUID());
-                register.setUserId(userId);
-                register.setRegisteredAt(Instant.now());
-                register.setStatus("UP");
-                register.setPause(false);
-                register.setAppName(data.getAppName());
-                register.setAppVersion(data.getAppVersion());
-                register.setBaseUrl(data.getBaseUrl());
-                register.setActuatorPath(data.getActuatorPath());
-                register.setPollIntervalSeconds(data.getPollIntervalSeconds());
-                register.setMemoryMaxBytes(tuple.getT1());
-                register.setCpuCoreCount(tuple.getT2());
-                register.setLastPolledAt(Instant.now());
-                register.setLastSeenUp(Instant.now());
+        return monitorUserService.resolveUserSecret(userId)
+            .flatMap(secret -> serverRegisterRepository
+                    .existsByBaseUrlAndActuatorPath(data.getBaseUrl(), data.getActuatorPath())
+                    .filter(exists -> !exists)
+                    .switchIfEmpty(Mono.error(new IllegalStateException(
+                            "Server already registered with url: " + data.getBaseUrl() + data.getActuatorPath())))
+                    .flatMap(_ -> validateActuatorUrl(data.getBaseUrl(), data.getActuatorPath(), secret))
+                    .flatMap(tuple -> {
+                        ServerRegister register = new ServerRegister();
+                        register.setId(UUID.randomUUID());
+                        register.setUserId(userId);
+                        register.setRegisteredAt(Instant.now());
+                        register.setStatus("UP");
+                        register.setPause(false);
+                        register.setAppName(data.getAppName());
+                        register.setAppVersion(data.getAppVersion());
+                        register.setBaseUrl(data.getBaseUrl());
+                        register.setActuatorPath(data.getActuatorPath());
+                        register.setPollIntervalSeconds(data.getPollIntervalSeconds());
+                        register.setMemoryMaxBytes(tuple.getT1());
+                        register.setCpuCoreCount(tuple.getT2());
+                        register.setLastPolledAt(Instant.now());
+                        register.setLastSeenUp(Instant.now());
 
-                return serverRegisterRepository.save(register)
-                        .doOnSuccess(s -> {
-                            assert s != null;
-                            log.info(
-                                    "Server registered id={} name={} url={}{} memoryMax={} cpuCores={}",
-                                    s.getId(), s.getAppName(), s.getBaseUrl(), s.getActuatorPath(),
-                                    s.getMemoryMaxBytes(), s.getCpuCoreCount());
-                        })
-                        .map(this::toDto);
-            });
+                        return serverRegisterRepository.save(register)
+                                .doOnSuccess(s -> {
+                                    assert s != null;
+                                    log.info(
+                                            "Server registered id={} name={} url={}{} memoryMax={} cpuCores={}",
+                                            s.getId(), s.getAppName(), s.getBaseUrl(), s.getActuatorPath(),
+                                            s.getMemoryMaxBytes(), s.getCpuCoreCount());
+                                })
+                                .map(this::toDto);
+                    })
+            );
     }
 
     public Mono<Void> updateAfterPoll(ServerRegister server, String health) {
@@ -120,10 +124,10 @@ public class ServerRegisterService {
                 });
     }
 
-    private Mono<Tuple2<Long, Integer>> validateActuatorUrl(String baseUrl, String actuatorPath) {
+    private Mono<Tuple2<Long, Integer>> validateActuatorUrl(String baseUrl, String actuatorPath, String secret) {
         return Mono.zip(
-                actuatorClient.fetchMemoryMax(baseUrl, actuatorPath),
-                actuatorClient.fetchCpuCoreCount(baseUrl, actuatorPath)
+                actuatorClient.fetchMemoryMax(baseUrl, actuatorPath, secret),
+                actuatorClient.fetchCpuCoreCount(baseUrl, actuatorPath, secret)
         ).flatMap(tuple -> {
             if (tuple.getT1() == 0L) {
                 return Mono.error(new IllegalStateException(

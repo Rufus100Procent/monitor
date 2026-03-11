@@ -17,24 +17,23 @@ public class ActuatorClient {
         this.webClient = webClient;
     }
 
-    public Mono<Long> fetchMemoryMax(String baseUrl, String actuatorPath) {
-        return get(baseUrl + actuatorPath + "/metrics/jvm.memory.max")
+    public Mono<Long> fetchMemoryMax(String baseUrl, String actuatorPath, String secret) {
+        return get(baseUrl + actuatorPath + "/metrics/jvm.memory.max", secret)
                 .map(json -> extractStatistic(json, "VALUE"))
                 .map(Double::longValue)
                 .onErrorReturn(0L);
     }
 
-    public Mono<Integer> fetchCpuCoreCount(String baseUrl, String actuatorPath) {
-        return get(baseUrl + actuatorPath + "/metrics/system.cpu.count")
+    public Mono<Integer> fetchCpuCoreCount(String baseUrl, String actuatorPath, String secret) {
+        return get(baseUrl + actuatorPath + "/metrics/system.cpu.count", secret)
                 .map(json -> extractStatistic(json, "VALUE"))
                 .map(Double::intValue)
                 .onErrorMap(ex -> new IllegalStateException(
                         "Could not reach actuator at: " + baseUrl + actuatorPath + " reason: " + ex.getMessage()));
     }
 
-    // health status + disk in one call
-    public Mono<HealthResult> fetchHealth(String baseUrl, String actuatorPath) {
-        return get(baseUrl + actuatorPath + "/health")
+    public Mono<HealthResult> fetchHealth(String baseUrl, String actuatorPath, String secret) {
+        return get(baseUrl + actuatorPath + "/health", secret)
                 .map(json -> {
                     String status = json.path("status").asString("UNKNOWN");
                     long diskTotal = json.path("components").path("diskSpace")
@@ -46,35 +45,38 @@ public class ActuatorClient {
                 .onErrorReturn(new HealthResult("DOWN", 0L, 0L));
     }
 
-    public Mono<String> fetchAppVersion(String baseUrl, String actuatorPath) {
-        return get(baseUrl + actuatorPath + "/info")
+    public Mono<String> fetchAppVersion(String baseUrl, String actuatorPath, String secret) {
+        return get(baseUrl + actuatorPath + "/info", secret)
                 .map(json -> json.path("build").path("version").asString("unknown"))
                 .onErrorReturn("unknown");
     }
 
-    public Mono<Double> fetchMetric(String baseUrl, String actuatorPath, String metricName) {
-        return get(baseUrl + actuatorPath + "/metrics/" + metricName)
+    public Mono<Double> fetchMetric(String baseUrl, String actuatorPath, String metricName, String secret) {
+        return get(baseUrl + actuatorPath + "/metrics/" + metricName, secret)
                 .map(json -> extractStatistic(json, "VALUE"))
                 .onErrorReturn(0.0);
     }
 
     public Mono<Double> fetchMetricStatistic(String baseUrl, String actuatorPath,
-                                             String metricName, String statistic) {
-        return get(baseUrl + actuatorPath + "/metrics/" + metricName)
+                                             String metricName, String statistic, String secret) {
+        return get(baseUrl + actuatorPath + "/metrics/" + metricName, secret)
                 .map(json -> extractStatistic(json, statistic))
                 .onErrorReturn(0.0);
     }
 
     public Mono<Double> fetchMetricByOutcome(String baseUrl, String actuatorPath,
-                                             String metricName, String outcome) {
-        return get(baseUrl + actuatorPath + "/metrics/" + metricName + "?tag=outcome:" + outcome)
+                                             String metricName, String outcome, String secret) {
+        return get(baseUrl + actuatorPath + "/metrics/" + metricName + "?tag=outcome:" + outcome, secret)
                 .map(json -> extractStatistic(json, "COUNT"))
                 .onErrorReturn(0.0);
     }
 
-    private Mono<JsonNode> get(String url) {
-        return webClient.get()
-                .uri(url)
+    private Mono<JsonNode> get(String url, String secret) {
+        WebClient.RequestHeadersSpec<?> request = webClient.get().uri(url);
+        if (!"NO_SECRET_CONFIGURED".equals(secret)) {
+            request = request.header("X-Monitor-Secret", secret);
+        }
+        return request
                 .retrieve()
                 .bodyToMono(JsonNode.class);
     }

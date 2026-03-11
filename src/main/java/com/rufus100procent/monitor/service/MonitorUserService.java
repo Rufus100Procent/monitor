@@ -50,6 +50,19 @@ public class MonitorUserService {
                 .map(Utils::formatBytes);
     }
 
+    public Mono<String> resolveUserSecret(UUID userId) {
+        return userRepository.findById(userId)
+                .map(user -> resolveSecret(user.getSecret()))
+                .defaultIfEmpty("NO_SECRET_CONFIGURED");
+    }
+
+    private String resolveSecret(String secret) {
+        if (secret == null || secret.isBlank()) {
+            return "NO_SECRET_CONFIGURED";
+        }
+        return secret;
+    }
+
     private Mono<MonitorUser> findUserById(UUID userId) {
         return userRepository.findById(userId)
                 .switchIfEmpty(Mono.error(new IllegalArgumentException(
