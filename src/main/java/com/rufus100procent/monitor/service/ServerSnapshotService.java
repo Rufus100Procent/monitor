@@ -5,6 +5,7 @@ import com.rufus100procent.monitor.modal.ServerRegister;
 import com.rufus100procent.monitor.modal.ServerSnapshot;
 import com.rufus100procent.monitor.repo.ServerRegisterRepository;
 import com.rufus100procent.monitor.repo.ServerSnapshotRepository;
+import com.rufus100procent.monitor.utils.StorageUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -96,7 +97,6 @@ public class ServerSnapshotService {
                 .startWith(CSV_HEADER);
     }
 
-
     private static final String CSV_HEADER =
             "id,server_id,polled_at,health_status,memory_used_bytes,cpu_usage," +
                     "system_load,uptime_seconds,jvm_threads_live,gc_overhead," +
@@ -131,8 +131,8 @@ public class ServerSnapshotService {
         return serverRegisterRepository.findByIdAndUserId(serverId, userId)
                 .switchIfEmpty(Mono.error(new IllegalArgumentException(
                         "Server not found with id: " + serverId)))
-                .flatMap(_ -> snapshotRepository.getTableSizeBytes())
-                .map(this::formatBytes);
+                .flatMap(_ -> snapshotRepository.getSnapshotSizeBytesByServerId(serverId))
+                .map(StorageUtils::formatBytes);
     }
 
     public Mono<ServerSnapshot> saveSnapshot(ServerSnapshot snapshot) {
@@ -199,12 +199,6 @@ public class ServerSnapshotService {
         dto.setHttp5xxCount(snapshot.getHttp5xxCount());
         dto.setPollSuccess(snapshot.isPollSuccess());
         return dto;
-    }
-    private String formatBytes(long bytes) {
-        if (bytes < 1024) return bytes + " B";
-        if (bytes < 1024 * 1024) return String.format("%.1f KB", bytes / 1024.0);
-        if (bytes < 1024L * 1024 * 1024) return String.format("%.1f MB", bytes / (1024.0 * 1024));
-        return String.format("%.2f GB", bytes / (1024.0 * 1024 * 1024));
     }
 
     private String str(Object val) {

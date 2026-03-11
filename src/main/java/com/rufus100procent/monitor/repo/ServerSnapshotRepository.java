@@ -36,8 +36,11 @@ public interface ServerSnapshotRepository extends ReactiveCrudRepository<ServerS
 
     Mono<ServerSnapshot> findTopByServerIdOrderByPolledAtDesc(UUID serverId);
 
-    @Query("SELECT pg_total_relation_size('server_snapshots')")
-    Mono<Long> getTableSizeBytes();
+    @Query("SELECT COALESCE(SUM(pg_column_size(s.*)), 0) FROM server_snapshots s WHERE s.server_id = :serverId")
+    Mono<Long> getSnapshotSizeBytesByServerId(UUID serverId);
+
+    @Query("SELECT COALESCE(SUM(pg_column_size(s.*)), 0) FROM server_snapshots s WHERE s.server_id IN (SELECT id FROM server_register WHERE user_id = :userId)")
+    Mono<Long> getSnapshotSizeBytesByUserId(UUID userId);
 
     @Query("SELECT * FROM server_snapshots WHERE server_id = :serverId ORDER BY polled_at DESC")
     Flux<ServerSnapshot> findAllByServerIdOrderByPolledAtDesc(UUID serverId);

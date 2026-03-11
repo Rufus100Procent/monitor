@@ -66,18 +66,6 @@ public class ServerRegisterService {
             });
     }
 
-    public Mono<String> regenerateSecret(UUID serverId, UUID userId) {
-        return findServerByIdAndUserId(serverId, userId)
-                .flatMap(server -> {
-                    server.markAsExisting();
-                    server.setSecret(generateSecret());
-                    return serverRegisterRepository.save(server)
-                            .doOnSuccess(_ -> log.info(
-                                    "Secret regenerated for serverId={}", serverId))
-                            .map(ServerRegister::getSecret);
-                });
-    }
-
     public Mono<Void> updateAfterPoll(ServerRegister server, String health) {
         server.setStatus(health);
         server.setLastPolledAt(Instant.now());
