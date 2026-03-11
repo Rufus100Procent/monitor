@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -35,34 +36,22 @@ public class ServerRegisterService {
             .filter(exists -> !exists)
             .switchIfEmpty(Mono.error(new IllegalStateException(
                     "Server already registered with url: " + data.getBaseUrl() + data.getActuatorPath())))
-            .flatMap(_ -> Mono.zip(
-                    actuatorClient.fetchMemoryMax(data.getBaseUrl(), data.getActuatorPath()),
-                    actuatorClient.fetchCpuCoreCount(data.getBaseUrl(), data.getActuatorPath())
-            ))
+            .flatMap(_ -> validateActuatorUrl(data.getBaseUrl(), data.getActuatorPath()))
             .flatMap(tuple -> {
-                long memoryMax   = tuple.getT1();
-                int cpuCoreCount = tuple.getT2();
-
-                if (memoryMax == 0L) {
-                    return Mono.error(new IllegalStateException(
-                            "Could not reach actuator at: " + data.getBaseUrl() + data.getActuatorPath()
-                                    + " — is the actuator exposed and reachable?"));
-                }
-
-                ServerRegister register = new ServerRegister();   // isNew = true by default
+                ServerRegister register = new ServerRegister();
                 register.setId(UUID.randomUUID());
-                register.setUserId(userId);                        // ← from JWT
+                register.setUserId(userId);
                 register.setRegisteredAt(Instant.now());
                 register.setStatus("UP");
                 register.setPause(false);
-                register.setSecret("monitor-v1-" + UUID.randomUUID());
+                register.setSecret(generateSecret());
                 register.setAppName(data.getAppName());
                 register.setAppVersion(data.getAppVersion());
                 register.setBaseUrl(data.getBaseUrl());
                 register.setActuatorPath(data.getActuatorPath());
                 register.setPollIntervalSeconds(data.getPollIntervalSeconds());
-                register.setMemoryMaxBytes(memoryMax);
-                register.setCpuCoreCount(cpuCoreCount);
+                register.setMemoryMaxBytes(tuple.getT1());
+                register.setCpuCoreCount(tuple.getT2());
                 register.setLastPolledAt(Instant.now());
                 register.setLastSeenUp(Instant.now());
 
@@ -76,6 +65,18 @@ public class ServerRegisterService {
                         })
                         .map(ServerRegister::getSecret);
             });
+    }
+
+    public Mono<String> regenerateSecret(UUID serverId, UUID userId) {
+        return findServerByIdAndUserId(serverId, userId)
+                .flatMap(server -> {
+                    server.markAsExisting();
+                    server.setSecret(generateSecret());
+                    return serverRegisterRepository.save(server)
+                            .doOnSuccess(_ -> log.info(
+                                    "Secret regenerated for serverId={}", serverId))
+                            .map(ServerRegister::getSecret);
+                });
     }
 
     public Mono<Void> updateAfterPoll(ServerRegister server, String health) {
@@ -98,9 +99,7 @@ public class ServerRegisterService {
     }
 
     public Mono<RegisteredServerDto> getServerById(UUID id, UUID userId) {
-        return serverRegisterRepository.findByIdAndUserId(id, userId)
-                .switchIfEmpty(Mono.error(new IllegalArgumentException(
-                        " Server not found with id: " + id)))
+        return findServerByIdAndUserId(id, userId)
                 .map(this::toDto);
     }
 
@@ -110,9 +109,7 @@ public class ServerRegisterService {
     }
 
     public Mono<RegisteredServerDto> updateServer(UpdateRegisteredServerDto data, UUID userId) {
-        return serverRegisterRepository.findByIdAndUserId(data.getId(), userId)
-                .switchIfEmpty(Mono.error(new IllegalArgumentException(
-                        "Server not found with id: " + data.getId())))
+        return findServerByIdAndUserId(data.getId(), userId)
                 .flatMap(register -> {
                     register.setAppName(data.getAppName());
                     register.setAppVersion(data.getAppVersion());
@@ -129,19 +126,40 @@ public class ServerRegisterService {
     }
 
     public Mono<Void> deleteServer(UUID id, UUID userId) {
-        return serverRegisterRepository.findByIdAndUserId(id, userId)
-                .switchIfEmpty(Mono.error(new IllegalArgumentException(
-                        "Server not found with id: " + id)))
+        return findServerByIdAndUserId(id, userId)
                 .flatMap(server -> {
                     log.info("Deleting server id={} name={}", server.getId(), server.getAppName());
                     return serverRegisterRepository.delete(server);
                 });
     }
 
+    private Mono<Tuple2<Long, Integer>> validateActuatorUrl(String baseUrl, String actuatorPath) {
+        return Mono.zip(
+                actuatorClient.fetchMemoryMax(baseUrl, actuatorPath),
+                actuatorClient.fetchCpuCoreCount(baseUrl, actuatorPath)
+        ).flatMap(tuple -> {
+            if (tuple.getT1() == 0L) {
+                return Mono.error(new IllegalStateException(
+                        "Could not reach actuator at: " + baseUrl + actuatorPath
+                                + " — is the actuator exposed and reachable?"));
+            }
+            return Mono.just(tuple);
+        });
+    }
+
+    private Mono<ServerRegister> findServerByIdAndUserId(UUID serverId, UUID userId) {
+        return serverRegisterRepository.findByIdAndUserId(serverId, userId)
+                .switchIfEmpty(Mono.error(new IllegalArgumentException(
+                        "Server not found with id: " + serverId)));
+    }
+
+    private String generateSecret() {
+        return "monitor-v1-" + UUID.randomUUID();
+    }
+
     private RegisteredServerDto toDto(ServerRegister register) {
         RegisteredServerDto dto = new RegisteredServerDto();
         dto.setId(register.getId());
-        dto.setAppName(register.getAppName());
         dto.setAppName(register.getAppName());
         dto.setAppVersion(register.getAppVersion());
         dto.setServerActuatorUrl(register.getBaseUrl() + register.getActuatorPath());
@@ -155,4 +173,5 @@ public class ServerRegisterService {
         dto.setLastSeenUp(register.getLastSeenUp());
         return dto;
     }
+
 }
