@@ -27,6 +27,10 @@ export function useServers() {
     if (!loaded.value) await fetch()
   }
 
+  function addServer(server: Server) {
+    servers.value = [server, ...servers.value]
+  }
+
   function removeServer(id: string) {
     servers.value = servers.value.filter(s => s.id !== id)
   }
@@ -36,5 +40,5 @@ export function useServers() {
     if (idx !== -1) servers.value[idx] = updated
   }
 
-  return { servers, loading, loaded, error, fetch, ensureLoaded, removeServer, updateServerInList }
+  return { servers, loading, loaded, error, fetch, ensureLoaded, addServer, removeServer, updateServerInList }
 }

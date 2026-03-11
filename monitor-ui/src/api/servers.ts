@@ -38,8 +38,8 @@ export interface UpdateServerBody {
   pause: boolean
 }
 
-export function registerServer(body: RegisterServerBody): Promise<{ secret: string }> {
-  return apiFetch<{ secret: string }>('/api/v0/server', {
+export function registerServer(body: RegisterServerBody): Promise<Server> {
+  return apiFetch<Server>('/api/v0/server', {
     method: 'POST',
     body: JSON.stringify(body),
   })
@@ -115,16 +115,6 @@ export async function getSnapshotSize(serverId: string): Promise<string> {
     headers: { Authorization: `Bearer ${token}` },
   })
   if (!res.ok) throw new Error('Failed to fetch snapshot size')
-  return res.text()
-}
-
-export async function generateSecret(serverId: string): Promise<string> {
-  const token = localStorage.getItem(TOKEN_KEY)
-  const res = await fetch(`${BASE_URL}/api/v0/server/${serverId}/secret`, {
-    method: 'PUT',
-    headers: { Authorization: `Bearer ${token}` },
-  })
-  if (!res.ok) throw new Error('Failed to generate secret')
   return res.text()
 }
 
