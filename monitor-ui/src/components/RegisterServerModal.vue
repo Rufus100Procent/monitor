@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { LoaderCircle, X } from 'lucide-vue-next'
+import { LoaderCircle, X, Copy, Check } from 'lucide-vue-next'
 import { registerServer } from '../api/servers'
 import type { RegisterServerBody } from '../api/servers'
 import { useServers } from '../composables/useServers'
@@ -19,6 +19,8 @@ const { fetch: fetchServers } = useServers()
 
 const submitting  = ref(false)
 const submitError = ref('')
+const secret      = ref('')
+const copied      = ref(false)
 
 const defaultForm = (): RegisterServerBody => ({
   actuatorPath: '/actuator',
@@ -43,6 +45,8 @@ watch(() => props.modelValue, (open) => {
   if (open) {
     form.value = defaultForm()
     submitError.value = ''
+    secret.value = ''
+    copied.value = false
     if (props.prefillUrl) {
       const { baseUrl, actuatorPath } = parseActuatorUrl(props.prefillUrl)
       form.value.baseUrl     = baseUrl
@@ -59,15 +63,21 @@ async function submit() {
   submitting.value  = true
   submitError.value = ''
   try {
-    await registerServer(form.value)
+    const res = await registerServer(form.value)
     await fetchServers()
-    close()
     emit('registered')
+    secret.value = res.secret
   } catch (e: unknown) {
     submitError.value = e instanceof Error ? e.message : 'Registration failed.'
   } finally {
     submitting.value = false
   }
+}
+
+async function copySecret() {
+  await navigator.clipboard.writeText(secret.value)
+  copied.value = true
+  setTimeout(() => { copied.value = false }, 2000)
 }
 </script>
 
@@ -84,7 +94,25 @@ async function submit() {
             </button>
           </div>
 
-          <form class="modal-form" @submit.prevent="submit">
+          <!-- Secret reveal screen -->
+          <div v-if="secret" class="secret-body">
+            <p class="secret-notice">
+              Make sure to copy your secret now as you will not be able to see it again.
+            </p>
+            <div class="secret-row">
+              <code class="secret-value">{{ secret }}</code>
+              <button class="btn-copy" :class="{ copied }" @click="copySecret" :title="copied ? 'Copied!' : 'Copy secret'">
+                <Check v-if="copied" :size="15" />
+                <Copy v-else :size="15" />
+              </button>
+            </div>
+            <div class="modal-actions">
+              <button type="button" class="btn-submit" @click="close">Done</button>
+            </div>
+          </div>
+
+          <!-- Registration form -->
+          <form v-else class="modal-form" @submit.prevent="submit">
 
             <div class="field">
               <label for="reg-appName">App Name</label>
@@ -260,6 +288,62 @@ async function submit() {
 
 .spin { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+.secret-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.secret-notice {
+  font-size: 13px;
+  color: var(--text-secondary);
+  background: hsl(38, 90%, 96%);
+  border: 1px solid hsl(38, 80%, 82%);
+  border-radius: 8px;
+  padding: 10px 13px;
+  line-height: 1.5;
+}
+.secret-notice strong { color: hsl(28, 80%, 40%); }
+:root.dark .secret-notice {
+  background: hsl(38, 40%, 14%);
+  border-color: hsl(38, 40%, 26%);
+  color: hsl(38, 70%, 75%);
+}
+:root.dark .secret-notice strong { color: hsl(38, 80%, 65%); }
+
+.secret-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.secret-value {
+  flex: 1;
+  font-family: monospace;
+  font-size: 12px;
+  color: var(--text-primary);
+  word-break: break-all;
+}
+
+.btn-copy {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-copy:hover { background: var(--nav-hover); color: var(--text-primary); }
+.btn-copy.copied { color: hsl(142, 60%, 40%); }
 
 .modal-enter-active,
 .modal-leave-active { transition: opacity 0.2s; }

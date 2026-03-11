@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { LoaderCircle, Download } from 'lucide-vue-next'
-import { updateServer, deleteServer, getSnapshotSize, exportSnapshotsCsv } from '../../api/servers'
+import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
+import { LoaderCircle, Download, Copy, Check } from 'lucide-vue-next'
+import { updateServer, deleteServer, getSnapshotSize, exportSnapshotsCsv, generateSecret } from '../../api/servers'
 import { useServers } from '../../composables/useServers'
 
 const route = useRoute()
@@ -94,6 +94,33 @@ async function doExport() {
   } finally {
     exporting.value = false
   }
+}
+
+// Generate secret
+const generatedSecret  = ref('')
+const generatingSecret = ref(false)
+const generateError    = ref('')
+const secretCopied     = ref(false)
+
+onBeforeRouteLeave(() => { generatedSecret.value = '' })
+
+async function doGenerateSecret() {
+  generatingSecret.value = true
+  generateError.value    = ''
+  generatedSecret.value  = ''
+  try {
+    generatedSecret.value = await generateSecret(serverId.value)
+  } catch (e) {
+    generateError.value = e instanceof Error ? e.message : 'Failed to generate secret.'
+  } finally {
+    generatingSecret.value = false
+  }
+}
+
+async function copyGeneratedSecret() {
+  await navigator.clipboard.writeText(generatedSecret.value)
+  secretCopied.value = true
+  setTimeout(() => { secretCopied.value = false }, 2000)
 }
 
 // Delete
@@ -200,7 +227,31 @@ async function confirmDelete() {
         </button>
       </div>
 
-      <!-- Div 4: Delete -->
+      <!-- Div 4: Generate Secret -->
+      <div class="settings-section">
+        <h2 class="section-title">Server Secret</h2>
+        <p class="secret-desc">Generate a new secret for this server. The previous secret will be invalidated immediately.</p>
+
+        <div v-if="generatedSecret" class="secret-reveal">
+          <p class="secret-notice">Make sure to copy your token now as you will not be able to see it again.</p>
+          <div class="secret-row">
+            <code class="secret-value">{{ generatedSecret }}</code>
+            <button class="btn-copy" :class="{ copied: secretCopied }" @click="copyGeneratedSecret" :title="secretCopied ? 'Copied!' : 'Copy secret'">
+              <Check v-if="secretCopied" :size="15" />
+              <Copy v-else :size="15" />
+            </button>
+          </div>
+        </div>
+
+        <div v-if="generateError" class="inline-error">{{ generateError }}</div>
+
+        <button class="btn-confirm" :disabled="generatingSecret" @click="doGenerateSecret">
+          <LoaderCircle v-if="generatingSecret" :size="14" class="spin" />
+          {{ generatingSecret ? 'Generating…' : 'Generate New Secret' }}
+        </button>
+      </div>
+
+      <!-- Div 5: Delete -->
       <div class="settings-section danger-section">
         <h2 class="section-title danger-title">Danger Zone</h2>
         <p class="danger-desc">
@@ -455,6 +506,66 @@ async function confirmDelete() {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* Secret section */
+.secret-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.secret-reveal {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.secret-notice {
+  font-size: 13px;
+  color: var(--text-secondary);
+  background: hsl(38, 90%, 96%);
+  border: 1px solid hsl(38, 80%, 82%);
+  border-radius: 8px;
+  padding: 10px 13px;
+  line-height: 1.5;
+}
+:root.dark .secret-notice {
+  background: hsl(38, 40%, 14%);
+  border-color: hsl(38, 40%, 26%);
+  color: hsl(38, 70%, 75%);
+}
+
+.secret-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.secret-value {
+  flex: 1;
+  font-family: monospace;
+  font-size: 12px;
+  color: var(--text-primary);
+  word-break: break-all;
+}
+
+.btn-copy {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-copy:hover { background: var(--nav-hover); color: var(--text-primary); }
+.btn-copy.copied { color: hsl(142, 60%, 40%); }
 
 /* Danger section */
 .danger-section {
