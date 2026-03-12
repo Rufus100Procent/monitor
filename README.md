@@ -219,7 +219,7 @@ This works automatically on Mac and Windows. On Linux it is handled by the `extr
 
 ---
 
-## Running Locally (Without Docker)
+## Running Locally
 
 Keep only the database in Docker and run the backend and frontend directly on your machine.
 
