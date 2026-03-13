@@ -2,7 +2,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { LoaderCircle, Download } from 'lucide-vue-next'
-import { updateServer, deleteServer, getSnapshotSize, exportSnapshotsCsv } from '../../api/servers'
+import { updateServer, deleteServer, getSnapshotSize, exportSnapshotsCsv } from '../../api/api'
 import { useServers } from '../../composables/useServers'
 
 const route = useRoute()
@@ -50,7 +50,7 @@ const isDirty = computed(() => {
   )
 })
 
-// ── Update
+// Update
 const updating = ref(false)
 const updateError = ref('')
 
@@ -69,7 +69,7 @@ async function confirmUpdate() {
   }
 }
 
-// ── Snapshot data
+// Snapshot data
 const snapshotSize = ref<string | null>(null)
 const loadingSize  = ref(false)
 const exporting    = ref(false)

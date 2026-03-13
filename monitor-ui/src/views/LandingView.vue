@@ -6,7 +6,7 @@ import {
   HardDrive, Clock, Database, Globe, BarChart2, Zap,
 } from 'lucide-vue-next'
 import { useAuth } from '../composables/useAuth'
-import { loginUser, registerUser } from '../api/auth'
+import { loginUser, registerUser } from '../api/api'
 import { version } from '../../package.json'
 
 const router = useRouter()
@@ -187,7 +187,7 @@ const METRICS = [
 </template>
 
 <style scoped>
-/* Shell─ */
+/* Shell */
 .landing-shell {
   min-height: 100vh;
   display: flex;
@@ -195,7 +195,7 @@ const METRICS = [
   background: var(--bg);
 }
 
-/* Container─ */
+/* Container */
 .container {
   width: 100%;
   max-width: 1160px;
@@ -204,7 +204,7 @@ const METRICS = [
   box-sizing: border-box;
 }
 
-/* Top bar─ */
+/* Top bar */
 .landing-bar {
   height: 58px;
   display: flex;
@@ -291,7 +291,7 @@ const METRICS = [
 .btn-primary:hover        { opacity: 0.88; }
 .btn-primary--muted       { opacity: 0.5; }
 
-/* Hero band─ */
+/* Hero band */
 .hero-band {
   background: linear-gradient(
     150deg,
@@ -458,7 +458,7 @@ const METRICS = [
   margin: 0;
 }
 
-/* Auth page─ */
+/* Auth page */
 .auth-page {
   flex: 1;
   display: flex;

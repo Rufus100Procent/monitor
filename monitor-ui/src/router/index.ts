@@ -41,14 +41,10 @@ const router = createRouter({
       component: () => import('../views/FaqView.vue'),
     },
     {
-      path: '/about',
-      redirect: '/',
-    },
-    {
       path: '/profile',
       name: 'Profile',
       meta: { title: 'Profile', requiresAuth: true },
-      component: () => import('../views/ProfileView.vue'),
+      component: () => import('../views/server/ProfileView.vue'),
     },
     {
       path: '/server/:id',

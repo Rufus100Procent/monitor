@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Snapshot } from '../../api/servers'
+import type { Snapshot } from '../../api/api'
 import { useDisplayTimezone } from '../../composables/useDisplayTimezone'
 
 const props = withDefaults(defineProps<{
@@ -193,7 +193,7 @@ function healthBg(status: string): string {
   overflow-x: auto;
 }
 
-/* ── Table ── */
+/* Table */
 .data-tbl {
   width: 100%;
   border-collapse: collapse;
@@ -230,7 +230,7 @@ function healthBg(status: string): string {
   border-left: 1px solid var(--border);
 }
 
-/* ── Cell types ── */
+/* Cell types */
 .td-time {
   font-size: 13px;
   font-weight: 500;
@@ -257,7 +257,7 @@ function healthBg(status: string): string {
 .c-2xx { color: hsl(142, 70%, 45%); }
 .c-3xx { color: hsl(28,  90%, 50%); }
 
-/* ── Pagination footer ── */
+/* Pagination footer */
 .tbl-footer {
   display: flex;
   align-items: center;
@@ -297,7 +297,7 @@ function healthBg(status: string): string {
 .pg-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
 .pg-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
-/* ── Mobile: each row becomes a labeled card ── */
+/* Mobile: each row becomes a labeled card */
 @media (max-width: 700px) {
   .tbl-scroll { overflow-x: unset; }
 

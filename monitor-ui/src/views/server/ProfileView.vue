@@ -2,9 +2,9 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { LoaderCircle, Copy, Check } from 'lucide-vue-next'
-import { useAuth } from '../composables/useAuth'
-import { useDisplayTimezone } from '../composables/useDisplayTimezone'
-import { generateUserSecret, deleteUser, getUserSnapshotSize } from '../api/user'
+import { useAuth } from '../../composables/useAuth'
+import { useDisplayTimezone } from '../../composables/useDisplayTimezone'
+import { generateUserSecret, deleteUser, getUserSnapshotSize } from '../../api/api'
 
 const { tokenPayload, clearToken } = useAuth()
 const { selectedIana } = useDisplayTimezone()
@@ -23,7 +23,7 @@ function formatDate(date: string | number | undefined): string {
 const createdAt = computed(() => formatDate(tokenPayload.value?.createdAt))
 const expiresAt = computed(() => formatDate(tokenPayload.value?.exp))
 
-// ── Snapshot size
+// Snapshot size
 const snapshotSize   = ref<string | null>(null)
 const loadingSize    = ref(false)
 
@@ -38,7 +38,7 @@ onMounted(async () => {
   }
 })
 
-// ── Generate secret
+// Generate secret
 const generatedSecret  = ref('')
 const generatingSecret = ref(false)
 const generateError    = ref('')

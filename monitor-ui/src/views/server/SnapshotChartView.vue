@@ -10,7 +10,7 @@ import {
   Filler,
 } from 'chart.js'
 import { Line } from 'vue-chartjs'
-import type { Snapshot } from '../../api/servers'
+import type { Snapshot } from '../../api/api'
 import { useTheme } from '../../composables/useTheme'
 import { useDisplayTimezone } from '../../composables/useDisplayTimezone'
 

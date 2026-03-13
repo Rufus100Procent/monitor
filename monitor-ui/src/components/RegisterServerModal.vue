@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { LoaderCircle, X } from 'lucide-vue-next'
-import { registerServer } from '../api/servers'
-import type { RegisterServerBody } from '../api/servers'
+import { registerServer } from '../api/api'
+import type { RegisterServerBody } from '../api/api'
 import { useServers } from '../composables/useServers'
 
 const props = defineProps<{

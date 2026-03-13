@@ -1,6 +1,6 @@
 import { ref } from 'vue'
-import { getServers } from '../api/servers'
-import type { Server } from '../api/servers'
+import { getServers } from '../api/api'
+import type { Server } from '../api/api'
 
 // Module-level singleton — shared across all components
 const servers = ref<Server[]>([])
